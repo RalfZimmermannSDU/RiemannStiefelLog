@@ -40,8 +40,8 @@ import Stiefel_Exp_Log as StEL
 
     
 # set dimensions
-n = 60
-p = 25
+n = 600
+p = 250
 
 #for the Euclidean metric: alpha = -0.5
 #for the Canonical metric: alpha = 0.0
