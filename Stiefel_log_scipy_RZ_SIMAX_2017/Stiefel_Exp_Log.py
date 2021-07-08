@@ -46,7 +46,6 @@ from numpy import random
 # Input arguments      
 #   U0    : base point on St(n,p)
 #   Delta : tangent vector in T_U0 St(n,p)
-#   alpha : metric parameter
 # Output arguments
 #   U1    : Exp^{St}_U0(Delta),
 #------------------------------------------------------------------------------
@@ -99,9 +98,9 @@ def Stiefel_Exp(U0, Delta):
 # do_Cayley     = 0/1: use Cayley trafo to approximate the matrix exp.
 #
 # Output arguments
-#   Delta : Log^{St}_U0(U1), 
-#           i.e. tangent vector such that Exp^St_U0(Delta) = U1
-#       k : iteration count upon convergence
+#    Delta : Log^{St}_U0(U1), 
+#            i.e. tangent vector such that Exp^St_U0(Delta) = U1
+#conv_hist : convergence history
 #------------------------------------------------------------------------------
 def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0):
 #------------------------------------------------------------------------------
