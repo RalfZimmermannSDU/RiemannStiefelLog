@@ -1,6 +1,7 @@
 SciPy code for the Riemannian logarithm
 on the Stiefel manifold under the canonical metric
 
+solves the "geodesic endpoint problem" locally
 
 In a Linux shell, run either of the scripts
 
