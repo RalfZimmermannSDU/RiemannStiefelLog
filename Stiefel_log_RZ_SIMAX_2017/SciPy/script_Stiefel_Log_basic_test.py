@@ -27,7 +27,7 @@ print('Running script_Stiefel_Log_basic_test.py')
 n = 1000
 p = 50
 # set number of random experiments
-runs = 1
+runs = 10
 dist = 0.8*scipy.pi
 
 # initialize 
