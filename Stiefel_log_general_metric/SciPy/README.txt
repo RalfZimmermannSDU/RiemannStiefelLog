@@ -1,7 +1,7 @@
 SciPy code for the Riemannian logarithm
-on the Stiefel manifold under the canonical metric
+on the Stiefel manifold for a one-parameter family of metrics
 
-solves the "geodesic endpoint problem" locally
+- solves the "geodesic endpoint problem" locally
 
 In a Linux shell, run either of the scripts
 
@@ -11,14 +11,13 @@ or
 
 $python3 script_Stiefel_Log_performace_comp.py
 
-This scripts conducts the canonical Stiefel logarithm 
+These scripts conduct the Riemannian Stiefel logarithm 
 for artifical pseudo-random Stiefel data.
-It performs 10 runs and outputs the average iteration count.
 
-The functions are contain in the module "Stiefel_Exp_Log.py".
+The functions are contained in the module "Stiefel_Exp_Log.py".
 
 The algorithms work for a one-parameter family of metrics, including the 
-Euclidean and the canonical metric.
+Euclidean and the canonical metric as special cases.
 The canonical metric allows for special algorithmic treatment.
 For all other metrics, a tailored shooting method is invoked.
 
