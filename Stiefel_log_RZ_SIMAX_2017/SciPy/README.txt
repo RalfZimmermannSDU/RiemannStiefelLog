@@ -1,5 +1,5 @@
 SciPy code for the Riemannian logarithm
-on the Stiefel manifold under the canonical metric
+on the Stiefel manifold under the canonical metric.
 
 The algorihm solves the "geodesic endpoint problem" locally.
 
@@ -12,14 +12,15 @@ This script conducts the canonical Stiefel logarithm
 for artifical pseudo-random Stiefel data.
 It performs 10 runs and outputs the average iteration count.
 
-The functions are contain in the module "Stiefel_Exp_Log.py".
+The functions are contained in the module "Stiefel_Exp_Log.py".
 
-The paramter settings are given in the script 
+The parameter settings are given in the script 
 "script_Stiefel_Log_basic_test.py".
+
 Edit lines 24-29 to change
 * the dimension
 * the number of runs
-* the distance of the Stiefel data
+* the distance of the Stiefel input data
 
 If you use these algorithms, please cite
 
