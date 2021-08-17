@@ -28,6 +28,9 @@
 # * Cayley(X):
 #      - classical Cayley transformation
 #
+# * solvsymsyl(A, C):
+#      - solve the sylvester equation AX + XA = C, with A sym, C skew
+#
 # * A2skew(A):
 #      - compute 0.5*(A-A^T)
 #
