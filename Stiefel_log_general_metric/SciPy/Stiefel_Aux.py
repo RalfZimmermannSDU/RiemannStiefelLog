@@ -36,7 +36,8 @@
 #------------------------------------------------------------------------------
 
 import scipy
-
+import numpy
+import time
 #------------------------------------------------------------------------------
 # alpha-metric on T_U St(n,p)
 #
@@ -276,6 +277,38 @@ def Cayley(X):
 
 
 #------------------------------------------------------------------------------
+# solve the symmetric sylvester equation
+# AX + XA  = C
+#
+# with A real, symmetric, C real, skew-symmetric
+#
+# via Bathia, Matrix Analysis, Theorem VII.2.3, p. 205
+#------------------------------------------------------------------------------
+def solvsymsyl(A, C):
+    # step 1: reduce to diagonal problem A = Q L Q'
+    #
+    # AX + XA = C  <=> L Q'XQ + Q'XQ L = Q'C Q
+    L, Q = scipy.linalg.eigh(A)
+    #
+    C2 = numpy.dot(Q.T, numpy.dot(C,Q))
+    
+    # step 2: build solution matrix
+    n = C.shape[0]
+    X = numpy.zeros((n,n))
+    for j in range(n):
+        for k in range(j+1,n):
+            X[j,k] = C2[j,k]/(L[j]+L[k])
+            X[k,j] = -X[j,k]
+
+    X = numpy.dot(Q, numpy.dot(X, Q.T))
+    #make X exactly skew
+    X = 0.5*(X-X.T)
+    return X
+#------------------------------------------------------------------------------
+
+
+
+#------------------------------------------------------------------------------
 def A2skew(A):
 #------------------------------------------------------------------------------
     # extract the skew-symmetric part of A
@@ -291,3 +324,5 @@ def A2sym(A):
     Asym = 0.5*(A+A.T)
     return Asym
 #------------------------------------------------------------------------------
+
+

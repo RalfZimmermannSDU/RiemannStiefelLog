@@ -183,7 +183,7 @@ def Stiefel_Log(U0, U1, tau, metric_alpha=0.0):
 #           i.e. tangent vector such that Exp^St_U0(Delta) = U1
 #       k : iteration count upon convergence
 #------------------------------------------------------------------------------
-def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0, do_Sylvester=1):
+def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
 #------------------------------------------------------------------------------
     # get dimensions
     n,p = U0.shape
@@ -266,12 +266,14 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0, do_Sylvester=1):
             #          need to correct for the correct sign
             Msym =(-1.0/12.0)*scipy.dot(LV[p:2*p, 0:p], LV[0:p, p:2*p])
             Msym[diag_pp] = Msym[diag_pp] - 0.5
-            # solve Sylvester equation
-            Csylv = scipy.linalg.solve_sylvester(Msym, Msym, C)
-            # make Csylv exactly skew
-            # for both cases do_Sylvester = 0,1,
-            # eventually exp(-C) is formed =>return -Csylv here.
-            C = -0.5*(Csylv-Csylv.T)
+            # solve Sylvester equation with tailored home-brew function
+            # eventually exp(-C) is formed =>return -C here.
+            C = -StAux.solvsymsyl(Msym, C)
+            # 
+            # ***use the following lines for scipy's solver***
+            #Csylv = scipy.linalg.solve_sylvester(Msym, Msym, C)
+            #C = -0.5*(Csylv-Csylv.T)
+            # ***end: use the following lines for scipy's solver***
 
         # exponential of updated block
         if do_Cayley:

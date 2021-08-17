@@ -31,6 +31,7 @@
 
 
 import scipy
+import numpy
 import time
 
 # local module
@@ -49,7 +50,7 @@ metric_alpha = -0.0
 
 # set number of random experiments
 runs = 10
-dist = 1.2*scipy.pi
+dist = 0.8*scipy.pi
 tau =  1.0e-11
 
 # Methods to be compared
@@ -60,9 +61,9 @@ Shoot      = 1
 Shoot4     = 1
 
 #initialize
-iters_array = scipy.zeros((5,))
-time_array  = scipy.zeros((5,))
-is_equal    = scipy.zeros((5,))
+iters_array = numpy.zeros((5,))
+time_array  = numpy.zeros((5,))
+is_equal    = numpy.zeros((5,))
 
 for j in range(runs):
     #----------------------------------------------------------------------
@@ -118,7 +119,7 @@ for j in range(runs):
     #----------------------------------------------------------------------
     # Method 3: shooting method on two steps
     if Shoot:
-        unit_int =  scipy.linspace(0.0,1.0,2)
+        unit_int =  numpy.linspace(0.0,1.0,2)
         t_start = time.time()
         Delta_rec, conv_hist_pS = StEL.Stiefel_Log_p_Shooting_uni(U0,\
                                                                   U1,\
@@ -137,7 +138,7 @@ for j in range(runs):
     #----------------------------------------------------------------------
     # Method 4: shooting method on four steps
     if Shoot4:  
-        unit_int = scipy.linspace(0.0, 1.0, 4)
+        unit_int = numpy.linspace(0.0, 1.0, 4)
         t_start = time.time()
         Delta_rec, conv_hist_pS4 = StEL.Stiefel_Log_p_Shooting_uni(U0,\
                                                                    U1,\

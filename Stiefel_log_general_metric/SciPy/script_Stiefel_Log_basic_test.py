@@ -38,7 +38,7 @@ print('Running script_Stiefel_Log_basic_test.py')
 # *** BEGIN: USER PARAMETERS ***
 # set dimensions
 n = 100
-p = 4
+p = 40
 # choose metric parameter: alpha = -0.5: Euclidean, alpha = 0.0: canonical
 alpha = -0.0
 # numerical convergence threshold
@@ -46,7 +46,7 @@ tau = 1.0e-12
 # set number of random experiments
 runs = 10
 # set distance of Stiefel points
-dist = 0.5*scipy.pi
+dist = 0.7*scipy.pi
 # plot convergence history of last run?
 do_plot = True
 # *** END: USER PARAMETERS ***
