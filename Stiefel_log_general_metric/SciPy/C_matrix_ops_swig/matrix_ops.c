@@ -11,7 +11,7 @@
 
  Input:  
  C_matrix  : nxn matrix, given as flattened long n*n vector
- L _vector : n-array (of eigenvectors)
+ L _vector : n-array (in actual application: array of eigenvalues)
  X_matrix : output, nxn matrix, given as flattened long n*n vector
  
    This operation is performed
