@@ -21,6 +21,14 @@ Euclidean and the canonical metric as special cases.
 The canonical metric allows for special algorithmic treatment.
 For all other metrics, a tailored shooting method is invoked.
 
+The algebraic Stiefel log procedure involves solving a symmetric Sylvester equation,
+which, in turn, involves an entry-by-entry matrix manipulation,
+which is known to be slow in Python.
+To accelerate the code, you can build a C-module which is then automatically 
+called in Python.
+To this end, go to the subfolder "C_matrix_ops_swig" and follow the instructions 
+given in "README_SWIG.txt".
+
 For theoretical background and description of the algorithms, see
 
 R. Zimmermann, K. H\"uper.

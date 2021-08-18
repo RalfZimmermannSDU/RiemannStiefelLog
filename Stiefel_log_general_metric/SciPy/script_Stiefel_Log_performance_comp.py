@@ -41,17 +41,21 @@ import Stiefel_Exp_Log as StEL
 
     
 # set dimensions
-n = 600
-p = 250
+n = 300
+p = 130
 
 #for the Euclidean metric: alpha = -0.5
 #for the Canonical metric: alpha = 0.0
 metric_alpha = -0.0
 
 # set number of random experiments
-runs = 10
+runs = 1
 dist = 0.8*scipy.pi
 tau =  1.0e-11
+
+print('***')
+print('Executing', runs, 'random run(s) for computing the Stiefel log')
+print('***')
 
 # Methods to be compared
 Alg        = 1

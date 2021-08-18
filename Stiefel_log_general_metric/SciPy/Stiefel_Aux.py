@@ -270,7 +270,7 @@ def Cayley(X):
     # form I-0.5X
     Xminus = -0.5*X
     Xminus[diag_pp] = Xminus[diag_pp] + 1.0
-        # form I+0.5X
+    # form I+0.5X
     Xplus  = 0.5*X
     Xplus[diag_pp] = Xplus[diag_pp] + 1.0
     
@@ -288,24 +288,41 @@ def Cayley(X):
 # via Bathia, Matrix Analysis, Theorem VII.2.3, p. 205
 #------------------------------------------------------------------------------
 def solvsymsyl(A, C):
+    #
+    # 
+    #
+    #
+    # step 0
+    try:
+        # local C-Modul
+        import C_matrix_ops_swig.C_matrix_ops as C_matrix_ops
+    except ImportError:
+        C_matrix_ops = None
+    
     # step 1: reduce to diagonal problem A = Q L Q'
     #
     # AX + XA = C  <=> L Q'XQ + Q'XQ L = Q'C Q
     L, Q = scipy.linalg.eigh(A)
     #
     C2 = numpy.dot(Q.T, numpy.dot(C,Q))
-    
-    # step 2: build solution matrix
+     # step 2: build solution matrix
     n = C.shape[0]
-    X = numpy.zeros((n,n))
-    for j in range(n):
-        for k in range(j+1,n):
-            X[j,k] = C2[j,k]/(L[j]+L[k])
-            X[k,j] = -X[j,k]
+    if C_matrix_ops != None:
+        #print("execute C code")
+        X = numpy.zeros((n*n,))
+        C_matrix_ops.symsylv_buildsolmat_func(C2.flatten(), L, X, n)
+        X = X.reshape((n,n))
+    else:
+        X = numpy.zeros((n,n))   
+        #print("execute python code")
+        for j in range(n):
+            for k in range(j+1,n):
+                X[j,k] = C2[j,k]/(L[j]+L[k])
+                X[k,j] = -X[j,k]
 
     X = numpy.dot(Q, numpy.dot(X, Q.T))
     #make X exactly skew
-    X = 0.5*(X-X.T)
+    X =A2skew(X)
     return X
 #------------------------------------------------------------------------------
 
@@ -327,5 +344,3 @@ def A2sym(A):
     Asym = 0.5*(A+A.T)
     return Asym
 #------------------------------------------------------------------------------
-
-

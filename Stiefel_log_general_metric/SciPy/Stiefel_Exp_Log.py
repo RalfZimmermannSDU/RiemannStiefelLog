@@ -253,7 +253,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
         normC = linalg.norm(C, 'fro')
         conv_hist.append(normC)
         if normC<tau:
-            print('Stiefel log converged after ', len(conv_hist), ' iterations.')
+            print('algebraic Stiefel log converged after ', len(conv_hist), ' iterations.')
             break
         
         # step 9
