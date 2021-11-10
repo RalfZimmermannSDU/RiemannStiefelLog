@@ -40,7 +40,7 @@
 
 import scipy
 import numpy
-import time
+
 #------------------------------------------------------------------------------
 # alpha-metric on T_U St(n,p)
 #
@@ -226,6 +226,8 @@ def SchurLog(V):
     # get dimensions
     n = V.shape[0]
 
+    flag_negval = 0  # raise a flag, if there is a negative real eigenvalue
+
     # start with real Schur decomposition Q S Q^T
     S, Q = scipy.linalg.schur(V)
     # S must have 2x2-block diagonal form
@@ -236,17 +238,20 @@ def SchurLog(V):
     while k < n:
         # is block of dim 1x1 => real eigenvalue? 
         if k==n-1:
-            if abs(S[k,k] +1.0)<1.0e-12:
+            if abs(S[k,k] +1.0)<1.0e-13:
                 print('Error:negativ eigval on real axis')
+                flag_negval = 1
             k = k+1
-        elif abs(S[k+1,k])<1.0e-12:
-            if abs(S[k,k] +1.0)<1.0e-12:
+        elif abs(S[k+1,k])<1.0e-13:
+            if abs(S[k,k] +1.0)<1.0e-13:
                 print('Error:negativ eigval on real axis')
+                flag_negval = 1
             # entry stays zero, just skip ahead
             k = k+1
         else:
             # there is a 2x2 block S(k:k+1, k:k+1)
-            phi = scipy.arcsin(S[k,k+1])
+            z = S[k,k] + 1j*S[k,k+1]
+            phi = scipy.log(z).imag
             logS[k,k+1] =  phi
             logS[k+1,k] = -phi
             k=k+2
@@ -254,7 +259,7 @@ def SchurLog(V):
     
     # form log matrix
     logV = scipy.dot(Q, logS.dot(Q.T))
-    return logV
+    return logV, flag_negval
 
 
 

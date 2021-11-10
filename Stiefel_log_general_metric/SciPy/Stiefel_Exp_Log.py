@@ -238,14 +238,13 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
         # step 5
         # home-brew logm-alg. tailored for orthogonal matrices from Stiefel_Aux
         # as an alternative, use: LV = linalg.logm(V)
-        LV = StAux.SchurLog(V)
+        [LV, flag_negval] = StAux.SchurLog(V)
                                   # standard matrix logarithm
                                   #             |Ak  -Bk'|
                                   # now, LV =   |Bk   Ck |
         # some safety measures:
-        # ensure that LV is real and skew
-        numpy.fill_diagonal(LV, 0.0)
-        LV = numpy.real(0.5*(LV-LV.T))
+        # ensure that LV is skew
+        LV = 0.5*(LV-LV.T)
         
         C = LV[p:2*p, p:2*p]      # lower (pxp)-diagonal block
  
