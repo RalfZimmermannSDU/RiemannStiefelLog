@@ -39,7 +39,7 @@
 #------------------------------------------------------------------------------
 
 import scipy
-import numpy
+import numpy as np
 
 #------------------------------------------------------------------------------
 # alpha-metric on T_U St(n,p)
@@ -53,8 +53,8 @@ import numpy
 #------------------------------------------------------------------------------
 def alphaMetric(D1, D2, U, metric_alpha=0.0):
 #------------------------------------------------------------------------------
-    a1 = scipy.trace(scipy.dot(D1.T, D2))
-    a2 = scipy.trace(scipy.dot(scipy.dot(D1.T, U), scipy.dot(U.T, D2)))
+    a1 = np.trace(np.dot(D1.T, D2))
+    a2 = np.trace(np.dot(np.dot(D1.T, U), np.dot(U.T, D2)))
     
     if abs(metric_alpha + 1.0) >1.0e-13:
         x  = (2*metric_alpha + 1)/(metric_alpha + 1)
@@ -90,9 +90,9 @@ def Exp4Geo(A, R, metric_alpha):
     p = A.shape[0]
     if abs(metric_alpha) < 1.0e-13:                          # canonical metric
         # build block matrix
-        upper = scipy.concatenate((A, -R.transpose()), axis=1)
-        lower = scipy.concatenate((R, scipy.zeros((p,p), dtype=R.dtype)),axis=1)
-        L     = scipy.concatenate((upper, lower), axis=0)
+        upper = np.concatenate((A, -R.transpose()), axis=1)
+        lower = np.concatenate((R, np.zeros((p,p), dtype=R.dtype)),axis=1)
+        L     = np.concatenate((upper, lower), axis=0)
         V = scipy.linalg.expm(L)
         M = V[0:p,0:p]
         N = V[p:2*p,0:p] 
@@ -101,13 +101,13 @@ def Exp4Geo(A, R, metric_alpha):
         x = 1.0/(metric_alpha +1)
         y  = (metric_alpha)/(metric_alpha +1)
         
-        upper = scipy.concatenate((x*A, -R.transpose()), axis=1)
-        lower = scipy.concatenate((R, scipy.zeros((p,p), dtype=R.dtype)),axis=1)
-        L     = scipy.concatenate((upper, lower), axis=0)
-        V = scipy.linalg.expm(L)
-        Phi = scipy.linalg.expm(y*A)
-        M = scipy.dot(V[0:p,0:p],Phi)
-        N = scipy.dot(V[p:2*p,0:p],Phi)
+        upper = np.concatenate((x*A, -R.transpose()), axis=1)
+        lower = np.concatenate((R, np.zeros((p,p), dtype=R.dtype)),axis=1)
+        L     = np.concatenate((upper, lower), axis=0)
+        V     = scipy.linalg.expm(L)
+        Phi   = scipy.linalg.expm(y*A)
+        M     = np.dot(V[0:p,0:p],Phi)
+        N     = np.dot(V[p:2*p,0:p],Phi)
     else:
         print('Error in  Stiefel_Exp: wrong metric. Choose alpha != -1.')
         M = 0
@@ -137,9 +137,9 @@ def Exp4Geo_pre(t, A_pre, Evecs, evals, metric_alpha):
     # it turns out that the way, scipy use broadcast yields
     #  diag(d)* X.conj().T = (X*d.conj().T).conj().T
     
-    V = Evecs[0:p,0:2*p] * scipy.exp((-t*1j)*evals)
-    V = scipy.dot(Evecs, V.conj().T)
-    V = scipy.real(V)
+    V = Evecs[0:p,0:2*p] * np.exp((-t*1j)*evals)
+    V = np.dot(Evecs, V.conj().T)
+    V = np.real(V)
     
     if abs(metric_alpha) < 1.0e-13:                           # canonical metric
         M = V[0:p,0:p]
@@ -149,8 +149,8 @@ def Exp4Geo_pre(t, A_pre, Evecs, evals, metric_alpha):
         # then we need y*A,   where y  = (alpha)/(alpha +1)
         # which is given by (y/(1-y))*A_pre = alpha*A_pre    
         Phi = scipy.linalg.expm((t*metric_alpha)*A_pre)
-        M = scipy.dot(V[0:p,0:p],Phi)
-        N = scipy.dot(V[p:2*p,0:p],Phi)
+        M = np.dot(V[0:p,0:p],Phi)
+        N = np.dot(V[p:2*p,0:p],Phi)
     else:
         print('Error in  Stiefel_Exp: wrong metric. Choose alpha != -1.')
         M = 0 
@@ -188,22 +188,22 @@ def Stiefel_approx_parallel_trans_p(M2, N2, A1, R1, nu):
     epsi = 1.0e-14
 
     # project Delta onto T_Y2 St(n,p) using the pxp factors only
-    sym_part = A2sym( scipy.dot(M2.T,A1) + scipy.dot(N2.T,R1))
+    sym_part = A2sym( np.dot(M2.T,A1) + np.dot(N2.T,R1))
 
-    A2 = A1 - scipy.dot(M2,sym_part)
-    R2 = R1 - scipy.dot(N2,sym_part)
+    A2 = A1 - np.dot(M2,sym_part)
+    R2 = R1 - np.dot(N2,sym_part)
     # rescale  
     # note: trace(A.T*A) = <A(:), A(:)> 
     
-    l = scipy.sqrt(scipy.dot(A2.flatten(), A2.flatten())\
-                   + scipy.dot(R2.flatten(), R2.flatten()))
+    l = np.sqrt(np.dot(A2.flatten(), A2.flatten())\
+                   + np.dot(R2.flatten(), R2.flatten()))
 
     if l > epsi:
         A2 = (nu/l)*A2
         R2 = (nu/l)*R2
     else:
-        A2 = scipy.zeros(A1.shape)
-        R2 = scipy.zeros(A1.shape)
+        A2 = np.zeros(A1.shape)
+        R2 = np.zeros(A1.shape)
         print("para trans zero case, nu=", nu)
 
     return A2, R2
@@ -239,26 +239,26 @@ def SchurLog(V):
         # is block of dim 1x1 => real eigenvalue? 
         if k==n-1:
             if abs(S[k,k] +1.0)<1.0e-13:
-                print('Error:negativ eigval on real axis')
+                print('Error: negativ eigval on real axis')
                 flag_negval = 1
             k = k+1
         elif abs(S[k+1,k])<1.0e-13:
             if abs(S[k,k] +1.0)<1.0e-13:
-                print('Error:negativ eigval on real axis')
+                print('Error: negativ eigval on real axis')
                 flag_negval = 1
             # entry stays zero, just skip ahead
             k = k+1
         else:
             # there is a 2x2 block S(k:k+1, k:k+1)
             z = S[k,k] + 1j*S[k,k+1]
-            phi = scipy.log(z).imag
+            phi = np.log(z).imag
             logS[k,k+1] =  phi
             logS[k+1,k] = -phi
             k=k+2
     # end while
     
     # form log matrix
-    logV = scipy.dot(Q, logS.dot(Q.T))
+    logV = np.dot(Q, logS.dot(Q.T))
     return logV, flag_negval
 
 
@@ -279,7 +279,7 @@ def Cayley(X):
     Xplus  = 0.5*X
     Xplus[diag_pp] = Xplus[diag_pp] + 1.0
     
-    Cay = scipy.dot(scipy.linalg.inv(Xminus), Xplus)
+    Cay = np.dot(np.linalg.inv(Xminus), Xplus)
     return Cay
 #------------------------------------------------------------------------------
 
@@ -307,25 +307,25 @@ def solvsymsyl(A, C):
     # step 1: reduce to diagonal problem A = Q L Q'
     #
     # AX + XA = C  <=> L Q'XQ + Q'XQ L = Q'C Q
-    L, Q = scipy.linalg.eigh(A)
+    L, Q = np.linalg.eigh(A)
     #
-    C2 = numpy.dot(Q.T, numpy.dot(C,Q))
+    C2 = np.dot(Q.T, np.dot(C,Q))
      # step 2: build solution matrix
     n = C.shape[0]
     if C_matrix_ops != None:
         #print("execute C code")
-        X = numpy.zeros((n*n,))
+        X = np.zeros((n*n,))
         C_matrix_ops.symsylv_buildsolmat_func(C2.flatten(), L, X, n)
         X = X.reshape((n,n))
     else:
-        X = numpy.zeros((n,n))   
+        X = np.zeros((n,n))   
         #print("execute python code")
         for j in range(n):
             for k in range(j+1,n):
                 X[j,k] = C2[j,k]/(L[j]+L[k])
                 X[k,j] = -X[j,k]
 
-    X = numpy.dot(Q, numpy.dot(X, Q.T))
+    X = np.dot(Q, np.dot(X, Q.T))
     #make X exactly skew
     X =A2skew(X)
     return X

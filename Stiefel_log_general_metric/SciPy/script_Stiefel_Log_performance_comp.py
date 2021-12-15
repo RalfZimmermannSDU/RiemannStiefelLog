@@ -41,20 +41,26 @@ import Stiefel_Exp_Log as StEL
 
     
 # set dimensions
-n = 300
-p = 130
+n = 90
+p = 30
 
 #for the Euclidean metric: alpha = -0.5
 #for the Canonical metric: alpha = 0.0
-metric_alpha = -0.0
+metric_alpha = 0.0
 
 # set number of random experiments
-runs = 1
+runs = 10
 dist = 0.8*scipy.pi
 tau =  1.0e-11
 
 print('***')
 print('Executing', runs, 'random run(s) for computing the Stiefel log')
+print('')
+print('Parameter settings:')
+print('Dimensions        (n,p) = (', n, ',', p,')')
+print('Riemannian metric alpha = ', metric_alpha)
+print('Riemannian dist(U0, U1) = ', dist, '= ', dist/scipy.pi, 'pi')
+print('')
 print('***')
 
 # Methods to be compared
@@ -68,6 +74,7 @@ Shoot4     = 1
 iters_array = numpy.zeros((5,))
 time_array  = numpy.zeros((5,))
 is_equal    = numpy.zeros((5,))
+nonconv_counter = numpy.zeros((5,))
 
 for j in range(runs):
     #----------------------------------------------------------------------
@@ -82,12 +89,20 @@ for j in range(runs):
         Delta_rec, conv_hist_Alg = StEL.Stiefel_Log_alg(U0, U1, tau,\
                                                         0,0,0)
         t_end = time.time()
+        print('algebraic Stiefel log converged after',\
+              len(conv_hist_Alg), ' iterations.')
+            
+        
         time_array[0] =  time_array[0] + t_end-t_start
-        is_equal[0]   = is_equal[0] + scipy.linalg.norm(Delta_rec-Delta, 1)
+        check_accuray = scipy.linalg.norm(Delta_rec-Delta, 1)
+        is_equal[0]   = is_equal[0] + check_accuray
+        iters_array[0]= iters_array[0] + len(conv_hist_Alg)
+        if check_accuray >1.0e-9:
+            nonconv_counter[0] = nonconv_counter[0] + 1
     else:
         conv_hist_Alg = [0]
     
-    iters_array[0] = iters_array[0] + len(conv_hist_Alg)
+
     #----------------------------------------------------------------------
      
     #----------------------------------------------------------------------
@@ -97,12 +112,21 @@ for j in range(runs):
         Delta_rec, conv_hist_AlgCay = StEL.Stiefel_Log_alg(U0, U1, tau,\
                                                            0,1,0)
         t_end = time.time()
+        
+        print('alg. Stiefel log+Cay  converged after',\
+              len(conv_hist_AlgCay), ' iterations.')
+        
         time_array[1] =  time_array[1] + t_end-t_start
-        is_equal[1]   = is_equal[1] + scipy.linalg.norm(Delta_rec-Delta, 1)
+        check_accuray = scipy.linalg.norm(Delta_rec-Delta, 1)
+        is_equal[1]   = is_equal[1] + check_accuray
+        iters_array[1]= iters_array[1] + len(conv_hist_AlgCay)
+        
+        if check_accuray >1.0e-9:
+            nonconv_counter[1] = nonconv_counter[1] + 1
     else:
         conv_hist_Alg = [0]
     
-    iters_array[1] = iters_array[1] + len(conv_hist_AlgCay)
+
     #----------------------------------------------------------------------
 
     #----------------------------------------------------------------------
@@ -112,12 +136,23 @@ for j in range(runs):
         Delta_rec, conv_hist_AlgCaySylv = StEL.Stiefel_Log_alg(U0, U1, tau,\
                                                                0,1,1)
         t_end = time.time()
+        
+        print('alg. Stiefel log+Cay+Sylv conv. after',\
+              len(conv_hist_AlgCaySylv), ' iterations.')
+        
         time_array[2] =  time_array[2] + t_end-t_start
-        is_equal[2]   = is_equal[2] + scipy.linalg.norm(Delta_rec-Delta, 1)
+        
+        check_accuray = scipy.linalg.norm(Delta_rec-Delta, 1)
+        is_equal[2]   = is_equal[2] + check_accuray
+        iters_array[2]= iters_array[2] + len(conv_hist_AlgCaySylv)
+        
+        if check_accuray >1.0e-9:
+            nonconv_counter[2] = nonconv_counter[2] + 1
+        
     else:
         conv_hist_Alg = [0]
 
-    iters_array[2] = iters_array[2] + len(conv_hist_AlgCaySylv)
+
     #----------------------------------------------------------------------
 
     #----------------------------------------------------------------------
@@ -131,12 +166,20 @@ for j in range(runs):
                                                                   tau,\
                                                                   metric_alpha)
         t_end = time.time()
+        
+        print('p-Shooting unified method on', len(unit_int), 'steps converged in ',\
+              len(conv_hist_pS), ' iterations')
+        
         time_array[3] =  time_array[3] + t_end-t_start
-        is_equal[3]   = is_equal[3] + scipy.linalg.norm(Delta_rec-Delta, 1)
+        check_accuray = scipy.linalg.norm(Delta_rec-Delta, 1)
+        is_equal[3]   = is_equal[3] + check_accuray
+        iters_array[3]= iters_array[3] + len(conv_hist_pS)
+        if check_accuray >1.0e-9:
+            nonconv_counter[3] = nonconv_counter[3] + 1
+        
     else:
         conv_hist_pS = [0]
 
-    iters_array[3] = iters_array[3] + len(conv_hist_pS)
     #----------------------------------------------------------------------
     
     #----------------------------------------------------------------------
@@ -150,27 +193,37 @@ for j in range(runs):
                                                                    tau,\
                                                                    metric_alpha)
         t_end = time.time()
+        
+        print('p-Shooting unified method on', len(unit_int), 'steps converged in ',\
+              len(conv_hist_pS4), ' iterations')
+        
         time_array[4] =  time_array[4] + t_end-t_start
-        is_equal[4] = is_equal[4] + scipy.linalg.norm(Delta_rec-Delta, 1)
+        check_accuray = scipy.linalg.norm(Delta_rec-Delta, 1)
+        is_equal[4]   = is_equal[4] + check_accuray
+        iters_array[4]= iters_array[4] + len(conv_hist_pS4)
+        if check_accuray >1.0e-9:
+            nonconv_counter[4] = nonconv_counter[4] + 1
     else:
         conv_hist_pS4 = [0]
-    
-    iters_array[4] = iters_array[4] + len(conv_hist_pS4)
     #----------------------------------------------------------------------
     # End loop over runs
 
 # average time and iteration count
-
+print('')
 print('The average iteration count of the various methods is:')
 iters_array = iters_array/runs
 print(iters_array)
-    
+
+print('')
 print('The average cpu time of the various methods is:')
 time_array = time_array/runs
 print(time_array)
 
+print('')
 print('The average reconstruction accuracy of the various methods is:')
 is_equal = is_equal/runs
 print(is_equal)
-    
-# End: if do_tests
+print('')
+print('Were there any runs that did not produce the correct result?')
+print(nonconv_counter)
+# End

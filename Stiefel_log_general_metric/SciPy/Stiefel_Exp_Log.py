@@ -35,7 +35,7 @@
 #
 #------------------------------------------------------------------------------
 
-import numpy
+import numpy as np
 import scipy
 from scipy import linalg
 from numpy import random
@@ -76,8 +76,8 @@ def Stiefel_Exp(U0, Delta, metric_alpha=0.0):
 #------------------------------------------------------------------------------
     # get dimensions
     n,p = U0.shape
-    A = scipy.dot(U0.transpose(),Delta)  # horizontal component
-    K = Delta-scipy.dot(U0,A)            # normal component
+    A = np.dot(U0.transpose(),Delta)  # horizontal component
+    K = Delta-np.dot(U0,A)            # normal component
     
     # qr of normal component
     QE, Re = scipy.linalg.qr(K, overwrite_a=True,\
@@ -103,14 +103,14 @@ def Stiefel_Exp(U0, Delta, metric_alpha=0.0):
         L     = scipy.concatenate((upper, lower), axis=0)
         MNe   = scipy.linalg.expm(L)
         expA  = scipy.linalg.expm(y*A)
-        MNe   = scipy.dot(MNe[:,0:p]       , expA)
+        MNe   = np.dot(MNe[:,0:p]       , expA)
     else:
         print('Error in  Stiefel_Exp: wrong metric. Choose alpha != -1.')
         print('Returning U1=U0')
         MNe   = scipy.eye(2*p,p)
         
     # perform U1 = U0*M + Q*N
-    U1 = scipy.dot(U0,MNe[0:p,0:p]) +  scipy.dot(QE, MNe[p:2*p,0:p])
+    U1 = np.dot(U0,MNe[0:p,0:p]) +  np.dot(QE, MNe[p:2*p,0:p])
     return U1
 #------------------------------------------------------------------------------
 
@@ -136,13 +136,11 @@ def Stiefel_Exp(U0, Delta, metric_alpha=0.0):
 #------------------------------------------------------------------------------
 def Stiefel_Log(U0, U1, tau, metric_alpha=0.0):
 #------------------------------------------------------------------------------
-
+    print("Use algebraic Stiefel log, metric alpha = ",metric_alpha)
     if abs(metric_alpha) < 1.0e-13:
-        # canonical metric: use algebraic Stiefel log
-        print("Use algebraic Stiefel log, metric alpha = ",metric_alpha)
+        # canonical metric: use algebraic Stiefel log  
         Delta, conv = Stiefel_Log_alg(U0, U1, tau)
     elif abs(metric_alpha + 1.0) > 1.0e-8:
-        print("Use shooting Stiefel log, metric alpha = ",metric_alpha )
         unit_int = scipy.linspace(0.0,1.0,4)
         Delta, conv = Stiefel_Log_p_Shooting_uni(U0,\
                                                  U1,\
@@ -190,9 +188,9 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
     # check_det     : 0/1, check if initial V0 is in SO(2p)
     check_det = 1
     # step 1
-    M = scipy.dot(U0.T, U1)
+    M = np.dot(U0.T, U1)
     # step 2
-    U0orth = U1 - scipy.dot(U0,M) 
+    U0orth = U1 - np.dot(U0,M) 
     # thin qr of normal component of U1
     Q, N = scipy.linalg.qr(U0orth, overwrite_a=True,\
                                 lwork=None,\
@@ -217,7 +215,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
                                    overwrite_a=False)
         R = R.transpose()
         # apply Procrustes rotation
-        V[:,p:2*p] = scipy.dot(V[:,p:2*p], scipy.dot(R,D.T))
+        V[:,p:2*p] = np.dot(V[:,p:2*p], np.dot(R,D.T))
         
     V = scipy.concatenate((MN, V[:,p:2*p]), axis=1)
                                            #          |M  X0|
@@ -252,7 +250,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
         normC = linalg.norm(C, 'fro')
         conv_hist.append(normC)
         if normC<tau:
-            print('algebraic Stiefel log converged after ', len(conv_hist), ' iterations.')
+            # convergence detected
             break
         
         # step 9
@@ -263,7 +261,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
             # compute (1.0/12.0)*B*B' - 0.5*eye(p)
             # Caution: the block LV(p+1:2*p) contains -B' !
             #          need to correct for the correct sign
-            Msym =(-1.0/12.0)*scipy.dot(LV[p:2*p, 0:p], LV[0:p, p:2*p])
+            Msym =(-1.0/12.0)*np.dot(LV[p:2*p, 0:p], LV[0:p, p:2*p])
             Msym[diag_pp] = Msym[diag_pp] - 0.5
             # solve Sylvester equation with tailored home-brew function
             # eventually exp(-C) is formed =>return -C here.
@@ -280,16 +278,16 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
             Phi = StAux.Cayley(-C)
         else:
             # standard matrix exponential
-            Phi = linalg.expm(-C)
+            Phi = scipy.linalg.expm(-C)
 
         # step 10: rotate the last p columns
-        V[:,p:2*p] = scipy.dot(V[:,p:2*p],Phi)   # update last p columns
+        V[:,p:2*p] = np.dot(V[:,p:2*p],Phi)   # update last p columns
   
     # prepare output                         |A  -B'|
     # upon convergence, we have  logm(V) =   |B   0 | = LV
     #     A = LV(1:p,1:p);     B = LV(p+1:2*p, 1:p)
     # Delta = U0*A+Q*B
-    Delta = scipy.dot(U0,LV[0:p,0:p]) + scipy.dot(Q, LV[p:2*p, 0:p])
+    Delta = np.dot(U0,LV[0:p,0:p]) + np.dot(Q, LV[p:2*p, 0:p])
     return Delta, conv_hist
 #------------------------------------------------------------------------------
 
@@ -329,15 +327,15 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
     n,p = U0.shape
 
     # controlling parameters
-    max_iter = 200
+    max_iter = 1000
 
     tsteps = len(unit_int)
 
     # step 1: compute the fixed coordinates U, Q
-    M0      = scipy.dot(U0.T,U1)
+    M0      = np.dot(U0.T,U1)
 
     # thin qr of normal component of U1
-    Q, R0 = scipy.linalg.qr(U1 - scipy.dot(U0,M0),\
+    Q, R0 = scipy.linalg.qr(U1 - np.dot(U0,M0),\
                             overwrite_a=True,\
                             lwork=None,\
                             mode='economic',\
@@ -358,7 +356,7 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
     #now: Delta = U0*A + Q0*R, no need to form explicitly
 
     # scale Delta to norm of W
-    n_d = scipy.sqrt(scipy.dot(A.flatten(), A.flatten()) + n_R0**2)
+    n_d = scipy.sqrt(np.dot(A.flatten(), A.flatten()) + n_R0**2)
     A = (n_w/n_d)*A
     R = (n_w/n_d)*R0
 
@@ -432,11 +430,9 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
         R = R - R_up
 
     # form Delta
-    Delta = scipy.dot(U0,A)+scipy.dot(Q,R)
+    Delta = np.dot(U0,A)+np.dot(Q,R)
 
-    if j < max_iter:
-        print('p-Shooting unified method converged in ', str(j), ' iterations')
-    else:
+    if j >= max_iter:
         print('p-Shooting unified method did not converge')
     
     return Delta, conv_hist
@@ -492,7 +488,7 @@ def create_random_Stiefel_data(n, p, dist,metric_alpha=0.0):
     A = random.rand(p,p)
     A = A-A.transpose()   # "random" p-by-p skew symmetric matrix
     T = random.rand(n,p)
-    Delta = scipy.dot(U0,A)+ T-scipy.dot(U0,scipy.dot(U0.transpose(),T))
+    Delta = np.dot(U0,A)+ T-np.dot(U0,np.dot(U0.transpose(),T))
     #normalize Delta w.r.t. the canonical metric
     norm_Delta = scipy.sqrt(StAux.alphaMetric(Delta, Delta, U0,metric_alpha))
     Delta = (dist/norm_Delta)*Delta
@@ -573,9 +569,9 @@ if do_tests:
 
         # basic exp log test:
         # compare three methods to compute the exponential
-        A = scipy.dot(U0.T,Delta)
+        A = np.dot(U0.T,Delta)
         A = StAux.A2skew(A)
-        Q, R = scipy.linalg.qr((Delta-scipy.dot(U0,A)), overwrite_a=True,\
+        Q, R = scipy.linalg.qr((Delta-np.dot(U0,A)), overwrite_a=True,\
                                lwork=None,\
                                mode='economic',\
                                pivoting=False,\
@@ -598,11 +594,11 @@ if do_tests:
         
         M, N = StAux.Exp4Geo_pre(1.0, A_pre, Evecs, evals, metric_alpha)
         
-        EXP1 = scipy.dot(U0,M) + scipy.dot(Q,N)
+        EXP1 = np.dot(U0,M) + np.dot(Q,N)
         EXP2 = Stiefel_Exp(U0, Delta,metric_alpha)
         
         M, N = StAux.Exp4Geo(A, R, metric_alpha)
-        EXP3 = scipy.dot(U0,M) + scipy.dot(Q,N)
+        EXP3 = np.dot(U0,M) + np.dot(Q,N)
         
         print('NORM TEST1:', scipy.linalg.norm(U1-EXP2, 1))
         print('NORM TEST2:', scipy.linalg.norm(U1-EXP1, 1))
