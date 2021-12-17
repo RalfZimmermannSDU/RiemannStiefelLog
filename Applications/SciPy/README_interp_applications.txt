@@ -1,5 +1,8 @@
 This folder contains tools for conducting interpolation on the compact Stiefel manifold.
 
+It relies on the SciPy implementation of the Riemannian Stiefel Exp and Log maps from
+"RiemannStiefelLog/Stiefel_log_general_metric/SciPy".
+
 In particular, it includes the academic examples of interpolating the orthogonal matrix factors 
 of a parametric QR-Decomposition and a parametric Singular Value Decomposition as featured in
 the paper:
@@ -40,3 +43,21 @@ The folder contains the following subfolders
 
 
 Make sure that the folder structure aligns with the data paths.
+
+If you are using the code, please consider citing the associated references:
+
+R. Zimmermann
+A MATRIX-ALGEBRAIC ALGORITHM FOR THE RIEMANNIAN LOGARITHM ON THE STIEFEL MANIFOLD UNDER THE CANONICAL METRIC
+SIAM J. MATRIX ANAL. APPL. Vol. 38, No. 2, pp. 322–342, 2017
+
+R. Zimmermann:
+HERMITE INTERPOLATION AND DATA PROCESSING ERRORS ON RIEMANNIAN MATRIX MANIFOLDS
+SIAM J. SCI . COMPUT. Vol. 42, No. 5, pp. A2593--A2619, 2020
+
+
+R. Zimmermann, K. H\"uper:
+Computing the Riemannian logarithm on the Stiefel manifold: metrics, methods and performance 
+arXiv:2103.12046, March 2022
+
+
+
