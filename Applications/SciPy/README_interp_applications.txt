@@ -1,4 +1,4 @@
-This folder containss tools for conducting interpolation on the compact Stiefel manifold.
+This folder contains tools for conducting interpolation on the compact Stiefel manifold.
 
 In particular, it includes the academic examples of interpolating the orthogonal matrix factors 
 of a parametric QR-Decomposition and a parametric Singular Value Decomposition as featured in
