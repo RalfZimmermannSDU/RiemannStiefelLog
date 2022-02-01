@@ -60,4 +60,5 @@ Computing the Riemannian logarithm on the Stiefel manifold: metrics, methods and
 arXiv:2103.12046, March 2022
 
 
+zimmermann@imada.sdu.dk
 
