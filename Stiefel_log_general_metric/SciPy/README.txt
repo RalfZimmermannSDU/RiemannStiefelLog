@@ -9,7 +9,7 @@ $python3 script_Stiefel_Log_basic_test.py
 
 or 
 
-$python3 script_Stiefel_Log_performace_comp.py
+$python3 script_Stiefel_Log_performance_comp.py
 
 These scripts conduct the Riemannian Stiefel logarithm 
 for artifical pseudo-random Stiefel data.
