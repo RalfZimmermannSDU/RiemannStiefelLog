@@ -21,7 +21,8 @@ For theoretical background and description of the algorithms, see
 
 R. Zimmermann, K. H\"uper.
 "Computing the Riemannian logarithm on the Stiefel manifold: 
- metrics, methods and performance", arXiv:2103.12046, March 2022
+ metrics, methods and performance", arXiv:2103.12046, March 2021
+The paper has been accepted for publication in SIMAX.
 
 If you make use of these methods, please cite the aforementioned reference.
 
@@ -43,7 +44,7 @@ The main functions are
 --> The Stiefel log shooting method (for all alpha metrics)
 
 
-Auxiliary functions in the folder Aux are
+Auxiliary functions in the folder Aux_Stiefel are
 * A2skew.m  
 --> returns 0.5*(A-A')
 

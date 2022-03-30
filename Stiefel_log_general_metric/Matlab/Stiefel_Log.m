@@ -35,7 +35,7 @@ function [Delta, conv_hist] = Stiefel_Log(U0, U1, tau,...
 %conv_hist : convergence history
 %-------------------------------------------------------------
 
-% check_det     : 0/1 check if initial V0 is in SO(2p)
+% check_det     : 0/1 check if initial V0 is in SO(2p), costly
 check_det = 0;
 
 % get dimensions

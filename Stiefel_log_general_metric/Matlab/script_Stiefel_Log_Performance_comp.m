@@ -9,7 +9,7 @@
 clear; close all;
 
 % add path to auxiliary Stiefel functions
-addpath('Aux/')
+addpath('Aux_Stiefel/')
 
 % set dimensions
 n = 500;
