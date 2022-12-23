@@ -37,7 +37,7 @@ M = U0'*U1;
 [Q,N] = qr(U1 - U0*M,0);   % thin qr of normal component of U1
 
 % step 3
-[V, ~] = qr([M;N]);                    % orthogonal completion
+[V, Rq] = qr([M;N]);                    % orthogonal completion
 
 % "Procrustes preprocessing"
 if do_Procrustes
