@@ -121,7 +121,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0):
     # step 3
     MN = scipy.concatenate((M,N), axis=0)    
     # orthogonal completion
-    V, R = scipy.linalg.qr(MN, overwrite_a=True,\
+    V, Rq = scipy.linalg.qr(MN, overwrite_a=True,\
                                lwork=None,\
                                mode='full',\
                                pivoting=False,\
