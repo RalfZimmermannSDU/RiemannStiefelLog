@@ -505,11 +505,58 @@ def create_random_Stiefel_data(n, p, dist,metric_alpha=0.0):
 
 
 
+#------------------------------------------------------------------------------
+# Polar decomposition retraction
+# P_U0 (D ) = (U0 + D)(In + DT D )^−1/2
+# 
+# Input arguments      
+#          U0    : base point on St(n,p)
+#          Delta : tangent vector in T_U0 St(n,p)
+# Output arguments
+#          U1    : P_X(V)
+#------------------------------------------------------------------------------
+def Stiefel_Pf_Ret(U0, Delta):
+#------------------------------------------------------------------------------
+    # get dimensions
+    n,p = U0.shape
+    
+    S = scipy.eye(p,p) + np.dot(Delta.transpose(), Delta);
+    # compute matrix square root
+    S = scipy.linalg.sqrtm(scipy.linalg.inv(S))
+        
+    # perform U1 = U0*M + Q*N
+    U1 = np.dot((U0+Delta),S)
+    return U1
+#------------------------------------------------------------------------------
 
 
 
-
-
+#------------------------------------------------------------------------------
+# Polar decomposition inverse retraction
+# 
+# 
+# Input arguments      
+#          U0 : base point on St(n,p)
+#          U1 :      point on St(n,p)
+# Output arguments
+#          Delta    : tangent vector in T_U0 St(n,p)
+#------------------------------------------------------------------------------
+def Stiefel_Pf_invRet(U0, U1):
+#------------------------------------------------------------------------------
+    # get dimensions
+    n,p = U0.shape
+    
+    M = (-1)*scipy.dot(U0.T,U1)
+    # solve MX + XM = -2*eye(p)
+    
+    X = scipy.linalg.solve_sylvester(M, M.T, (-2)*np.eye(p,p))
+    print('check syl solve')
+    print(np.allclose(M.dot(X) + X.dot(M.T), (-2)*np.eye(p,p)))
+    
+    Delta = U1.dot(X) - U0
+        
+    return Delta
+#------------------------------------------------------------------------------
 
 
 
@@ -539,7 +586,7 @@ def create_random_Stiefel_data(n, p, dist,metric_alpha=0.0):
 # \/
 #******************************************************************************
 
-do_tests = 0
+do_tests = 1
 if do_tests:
     
     # set dimensions
@@ -565,6 +612,19 @@ if do_tests:
         #create random stiefel data
         U0, U1, Delta = create_random_Stiefel_data(n, p, dist, metric_alpha)
         #----------------------------------------------------------------------
+        
+        
+        Test = Stiefel_Pf_Ret(U0, Delta)
+        
+        Delta2 = Stiefel_Pf_invRet(U0, Test)
+        
+        
+        print('here')
+        print(np.allclose(np.dot(Test.T,Test), np.eye(p)))
+        print(np.linalg.norm((Delta-Delta2)))
+        
+        
+        
         print('dist', distStiefel(U0, U1, metric_alpha))
 
         # basic exp log test:
