@@ -29,6 +29,9 @@ called in Python.
 To this end, go to the subfolder "C_matrix_ops_swig" and follow the instructions 
 given in "README_SWIG.txt".
 
+!Consider doing this: It is easily done and the speed-up is significant!
+
+
 For theoretical background and description of the algorithms, see
 
 R. Zimmermann, K. H\"uper.

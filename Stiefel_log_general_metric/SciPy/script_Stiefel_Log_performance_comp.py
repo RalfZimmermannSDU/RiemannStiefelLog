@@ -50,7 +50,7 @@ metric_alpha = 0.0
 
 # set number of random experiments
 runs = 10
-dist = 0.8*scipy.pi
+dist = 0.8*numpy.pi
 tau =  1.0e-11
 
 print('***')
@@ -59,7 +59,7 @@ print('')
 print('Parameter settings:')
 print('Dimensions        (n,p) = (', n, ',', p,')')
 print('Riemannian metric alpha = ', metric_alpha)
-print('Riemannian dist(U0, U1) = ', dist, '= ', dist/scipy.pi, 'pi')
+print('Riemannian dist(U0, U1) = ', dist, '= ', dist/numpy.pi, 'pi')
 print('')
 print('***')
 

@@ -85,12 +85,12 @@ def Stiefel_Exp(U0, Delta, metric_alpha=0.0):
                                 mode='economic',\
                                 pivoting=False,\
                                 check_finite=True)
-    if scipy.allclose(0.0, metric_alpha):
+    if np.allclose(0.0, metric_alpha):
         # special case: alpha=0: canonical metric
         # build block matrix, matrix exponential
-        upper = scipy.concatenate((A, -Re.transpose()), axis=1)
-        lower = scipy.concatenate((Re, scipy.zeros((p,p), dtype=Re.dtype)), axis=1)
-        L     = scipy.concatenate((upper, lower), axis=0)
+        upper = np.concatenate((A, -Re.transpose()), axis=1)
+        lower = np.concatenate((Re, np.zeros((p,p), dtype=Re.dtype)), axis=1)
+        L     = np.concatenate((upper, lower), axis=0)
         MNe   = scipy.linalg.expm(L)
         MNe   = MNe[:,0:p]
     elif (abs(metric_alpha+1.0)> 1.0e-13):
@@ -98,16 +98,16 @@ def Stiefel_Exp(U0, Delta, metric_alpha=0.0):
         x  = 1.0/(metric_alpha +1.0)
         y  = (metric_alpha)/(metric_alpha +1)
         # build block matrix, evaluate matrix exponential
-        upper = scipy.concatenate((x*A, -Re.transpose()), axis=1)
-        lower = scipy.concatenate((Re, scipy.zeros((p,p), dtype=Re.dtype)), axis=1)
-        L     = scipy.concatenate((upper, lower), axis=0)
+        upper = np.concatenate((x*A, -Re.transpose()), axis=1)
+        lower = np.concatenate((Re, np.zeros((p,p), dtype=Re.dtype)), axis=1)
+        L     = np.concatenate((upper, lower), axis=0)
         MNe   = scipy.linalg.expm(L)
         expA  = scipy.linalg.expm(y*A)
         MNe   = np.dot(MNe[:,0:p]       , expA)
     else:
         print('Error in  Stiefel_Exp: wrong metric. Choose alpha != -1.')
         print('Returning U1=U0')
-        MNe   = scipy.eye(2*p,p)
+        MNe   = np.eye(2*p,p)
         
     # perform U1 = U0*M + Q*N
     U1 = np.dot(U0,MNe[0:p,0:p]) +  np.dot(QE, MNe[p:2*p,0:p])
@@ -198,7 +198,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
                                 pivoting=False,\
                                 check_finite=True)
     # step 3
-    MN = scipy.concatenate((M,N), axis=0)    
+    MN = np.concatenate((M,N), axis=0)    
     # orthogonal completion
     V, R = scipy.linalg.qr(MN, overwrite_a=True,\
                                lwork=None,\
@@ -217,7 +217,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
         # apply Procrustes rotation
         V[:,p:2*p] = np.dot(V[:,p:2*p], np.dot(R,D.T))
         
-    V = scipy.concatenate((MN, V[:,p:2*p]), axis=1)
+    V = np.concatenate((MN, V[:,p:2*p]), axis=1)
                                            #          |M  X0|
                                            # now, V = |N  Y0|
     
@@ -256,7 +256,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
         # step 9
         if do_Sylvester:
             # indices of diagonal p by p matrix
-            diag_pp = scipy.diag_indices(p)
+            diag_pp = np.diag_indices(p)
             # set up symmetric Sylvester problem
             # compute (1.0/12.0)*B*B' - 0.5*eye(p)
             # Caution: the block LV(p+1:2*p) contains -B' !
@@ -345,9 +345,9 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
     # W = U0*M0 + Q0*R0 - U0 = U0(M0-I) + Q*R0
 
     # compute norm of W, this matches norm(U0*(M0-I) + Q0*R0, 'fro')
-    n_M0I = scipy.linalg.norm(M0-scipy.eye(p),'fro')
+    n_M0I = scipy.linalg.norm(M0-np.eye(p),'fro')
     n_R0  = scipy.linalg.norm(R0,'fro') 
-    n_w   = scipy.sqrt(n_M0I**2 + n_R0**2)
+    n_w   = np.sqrt(n_M0I**2 + n_R0**2)
 
     # compute initial shooting vector:
     # project gap U1-U0 onto T_U0 St(n,p)
@@ -356,14 +356,14 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
     #now: Delta = U0*A + Q0*R, no need to form explicitly
 
     # scale Delta to norm of W
-    n_d = scipy.sqrt(np.dot(A.flatten(), A.flatten()) + n_R0**2)
+    n_d = np.sqrt(np.dot(A.flatten(), A.flatten()) + n_R0**2)
     A = (n_w/n_d)*A
     R = (n_w/n_d)*R0
 
     # initialize array of "geodesic p-factors" at each t in t_int
-    GeoM = scipy.zeros((tsteps, p,p))
-    GeoN = scipy.zeros((tsteps, p,p))
-    GeoM[0,:,:] = scipy.eye(p)
+    GeoM = np.zeros((tsteps, p,p))
+    GeoN = np.zeros((tsteps, p,p))
+    GeoM[0,:,:] = np.eye(p)
 
     # make sure that the iterations start
     j = 0
@@ -386,12 +386,12 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
             else:
                 A_pre = A
             
-            upper = scipy.concatenate((A_pre, -R.transpose()), axis=1)
-            lower = scipy.concatenate((R, scipy.zeros((p,p), dtype=R.dtype)), axis=1)
-            L     = scipy.concatenate((upper, lower), axis=0)                 
+            upper = np.concatenate((A_pre, -R.transpose()), axis=1)
+            lower = np.concatenate((R, np.zeros((p,p), dtype=R.dtype)), axis=1)
+            L     = np.concatenate((upper, lower), axis=0)                 
             Evals, Evecs = scipy.linalg.eig(L)               
             # eigenvalues are on complex axis
-            evals = scipy.imag(Evals)
+            evals = np.imag(Evals)
         
             for k in range(1,tsteps):
                 GeoM[k,:,:],GeoN[k,:,:] = StAux.Exp4Geo_pre(unit_int[k],\
@@ -411,7 +411,7 @@ def Stiefel_Log_p_Shooting_uni(U0, U1, unit_int, tau, metric_alpha):
     
         # compute norm of W
         # this matches norm(U0*M + Q0*N - U1, 'fro')    
-        n_w = scipy.sqrt(scipy.linalg.norm(A_up,'fro')**2\
+        n_w = np.sqrt(scipy.linalg.norm(A_up,'fro')**2\
                          + scipy.linalg.norm(R_up,'fro')**2)
         conv_hist.append(n_w)
     
@@ -454,7 +454,7 @@ def distStiefel(U1, U2, metric_alpha=0.0):
 #------------------------------------------------------------------------------
     tau = 1.0e-11
     Delta, conv = Stiefel_Log(U1, U2, tau, metric_alpha)      
-    dist = scipy.sqrt(StAux.alphaMetric(Delta, Delta, U1, metric_alpha))
+    dist = np.sqrt(StAux.alphaMetric(Delta, Delta, U1, metric_alpha))
     return dist
 #------------------------------------------------------------------------------
 
@@ -490,7 +490,7 @@ def create_random_Stiefel_data(n, p, dist,metric_alpha=0.0):
     T = random.rand(n,p)
     Delta = np.dot(U0,A)+ T-np.dot(U0,np.dot(U0.transpose(),T))
     #normalize Delta w.r.t. the canonical metric
-    norm_Delta = scipy.sqrt(StAux.alphaMetric(Delta, Delta, U0,metric_alpha))
+    norm_Delta = np.sqrt(StAux.alphaMetric(Delta, Delta, U0,metric_alpha))
     Delta = (dist/norm_Delta)*Delta
     # 'project' Delta onto St(n,p) via the Stiefel exponential
     U1 = Stiefel_Exp(U0, Delta,metric_alpha)
@@ -520,7 +520,7 @@ def Stiefel_Pf_Ret(U0, Delta):
     # get dimensions
     n,p = U0.shape
     
-    S = scipy.eye(p,p) + np.dot(Delta.transpose(), Delta);
+    S = np.eye(p,p) + np.dot(Delta.transpose(), Delta);
     # compute matrix square root
     S = scipy.linalg.sqrtm(scipy.linalg.inv(S))
         
@@ -546,7 +546,7 @@ def Stiefel_Pf_invRet(U0, U1):
     # get dimensions
     n,p = U0.shape
     
-    M = (-1)*scipy.dot(U0.T,U1)
+    M = (-1)*np.dot(U0.T,U1)
     # solve MX + XM = -2*eye(p)
     
     X = scipy.linalg.solve_sylvester(M, M.T, (-2)*np.eye(p,p))
@@ -586,7 +586,7 @@ def Stiefel_Pf_invRet(U0, U1):
 # \/
 #******************************************************************************
 
-do_tests = 1
+do_tests = 0
 if do_tests:
     
     # set dimensions
@@ -599,13 +599,13 @@ if do_tests:
 
     # set number of random experiments
     runs = 1
-    dist = 1.2*scipy.pi
+    dist = 1.2*np.pi
     tau =  1.0e-11
 
     #initialize
-    iters_array = scipy.zeros((5,))
-    time_array  = scipy.zeros((5,))
-    is_equal    = scipy.zeros((5,))
+    iters_array = np.zeros((5,))
+    time_array  = np.zeros((5,))
+    is_equal    = np.zeros((5,))
     
     for j in range(runs):
         #----------------------------------------------------------------------
@@ -645,12 +645,12 @@ if do_tests:
         else:
             A_pre = A
 
-        upper = scipy.concatenate((A_pre, -R.transpose()), axis=1)
-        lower = scipy.concatenate((R, scipy.zeros((p,p), dtype=R.dtype)), axis=1)
-        L     = scipy.concatenate((upper, lower), axis=0)                 
+        upper = np.concatenate((A_pre, -R.transpose()), axis=1)
+        lower = np.concatenate((R, np.zeros((p,p), dtype=R.dtype)), axis=1)
+        L     = np.concatenate((upper, lower), axis=0)                 
         Evals, Evecs = scipy.linalg.eig(L)         
         # eigenvalues are on complex axis
-        evals = scipy.imag(Evals)
+        evals = np.imag(Evals)
         
         M, N = StAux.Exp4Geo_pre(1.0, A_pre, Evecs, evals, metric_alpha)
         
