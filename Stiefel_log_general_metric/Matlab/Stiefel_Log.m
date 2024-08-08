@@ -174,6 +174,7 @@ while k < n+1
         phi = logtmp(1,2);
         logS(k,k+1) = phi;
         logS(k+1,k) = -phi;
+        k = k+2;
     end
 end
 
