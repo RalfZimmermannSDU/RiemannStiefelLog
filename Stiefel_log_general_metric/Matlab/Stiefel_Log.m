@@ -167,10 +167,13 @@ while k < n+1
         k = k+1;
     else
         % there is a 2x2 block S(k:k+1, k:k+1)
-        phi = asin(S(k,k+1));
+        % this block must be real orthogonal of the form
+        % |cos(phi) sin(phi)|
+        % |-sin(phi) cos(phi)|
+        logtmp = logm(S(k:k+1, k:k+1));
+        phi = logtmp(1,2);
         logS(k,k+1) = phi;
         logS(k+1,k) = -phi;
-        k=k+2;
     end
 end
 
