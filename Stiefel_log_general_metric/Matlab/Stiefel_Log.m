@@ -51,7 +51,7 @@ M = U0'*U1;
 [Q,N] = qr(U1 - U0*M,0);   % thin qr of normal component of U1
 
 % step 3
-[V, ~] = qr([M;N]);                    % orthogonal completion
+[V, Rq] = qr([M;N]);                    % orthogonal completion
 
 % "Procrustes preprocessing"
 if do_Procrustes
@@ -65,9 +65,14 @@ V            = [[M;N], V(:,p+1:2*p)];  %          |M  X0|
 % check if "V \in SO(2p)"
 if check_det
     % ensure that "V \in SO(n)"                                       
-    DET = det(V);
-    if DET < 0
-        V(:,p+1) = (-1)*V(:,p+1);
+    if do_Procrustes
+        if ((-1)^p)*prod(diag(Rq(1:p,1:p)))*det(R*D') < 0
+            V(:,p+1) = (-1)*V(:,p+1);
+        end
+    else
+        if ((-1)^p)*prod(diag(Rq(1:p,1:p))) < 0
+            V(:,p+1) = (-1)*V(:,p+1);
+        end
     end
 end
 
