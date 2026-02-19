@@ -26,7 +26,7 @@
 #
 # @author: Ralf Zimmermann, IMADA, SDU Odense
 #------------------------------------------------------------------------------
-
+import numpy as np
 import scipy
 from scipy import linalg
 import matplotlib.pyplot as plt
@@ -46,7 +46,7 @@ tau = 1.0e-12
 # set number of random experiments
 runs = 10
 # set distance of Stiefel points
-dist = 0.7*scipy.pi
+dist = 0.7*np.pi
 # plot convergence history of last run?
 do_plot = True
 # *** END: USER PARAMETERS ***

@@ -12,8 +12,8 @@ clear; close all;
 addpath('Aux_Stiefel/')
 
 % set dimensions
-n = 500;
-p = 250;
+n = 50;
+p = 25;
 %this is for the canonical metric:
 alpha = 0;
 

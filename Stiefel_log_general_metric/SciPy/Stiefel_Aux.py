@@ -271,7 +271,7 @@ def Cayley(X):
 #------------------------------------------------------------------------------
     p = X.shape[0]
     # diagonal indicces
-    diag_pp = scipy.diag_indices(p)
+    diag_pp = np.diag_indices(p)
     # form I-0.5X
     Xminus = -0.5*X
     Xminus[diag_pp] = Xminus[diag_pp] + 1.0
@@ -313,13 +313,13 @@ def solvsymsyl(A, C):
      # step 2: build solution matrix
     n = C.shape[0]
     if C_matrix_ops != None:
-        #print("execute C code")
+        print("execute C code")
         X = np.zeros((n*n,))
         C_matrix_ops.symsylv_buildsolmat_func(C2.flatten(), L, X, n)
         X = X.reshape((n,n))
     else:
         X = np.zeros((n,n))   
-        #print("execute python code")
+        print("execute python code")
         for j in range(n):
             for k in range(j+1,n):
                 X[j,k] = C2[j,k]/(L[j]+L[k])

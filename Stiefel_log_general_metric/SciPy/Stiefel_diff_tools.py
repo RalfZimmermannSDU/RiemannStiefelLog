@@ -26,7 +26,7 @@
 #------------------------------------------------------------------------------
 import numpy
 import scipy
-import sys
+
 
 from scipy import linalg
 from numpy import random
@@ -70,27 +70,27 @@ def Stiefel_diff_QR(A0, V):
                                pivoting=False,\
                                check_finite=True)
     # invert R
-    Rinv = linalg.solve_triangular(R, scipy.identity(p))
+    Rinv = linalg.solve_triangular(R, numpy.eye(p))
     # clean up numerically
     for i in range(Rinv.shape[0]):
         for j in range(i):
             Rinv[i,j] = 0.0     
     # construct helper matrix D = Q^T dQ 
-    QTV = scipy.dot(Q.transpose(),V)
-    D = scipy.dot(QTV, Rinv) 
+    QTV = numpy.dot(Q.transpose(),V)
+    D = numpy.dot(QTV, Rinv) 
     D = select_lower(D)
     # make D skew
     D = D - D.transpose()
     
     # compute derivative of R
-    dR = QTV - scipy.dot(D, R)
+    dR = QTV - numpy.dot(D, R)
     # clean up numerically
     for i in range(dR.shape[0]):
         for j in range(i):
             dR[i,j] = 0.0    
     # compute derivative of Q
-    dQ = V - scipy.dot(Q, QTV)
-    dQ = scipy.dot(dQ, Rinv) +  scipy.dot(Q,D)
+    dQ = V - numpy.dot(Q, QTV)
+    dQ = numpy.dot(dQ, Rinv) +  numpy.dot(Q,D)
 
     return Q, dQ, R, dR
 #------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ def select_lower(M):
         # get dimensions
     n,p = M.shape
     
-    L = scipy.zeros((n,n))
+    L = numpy.zeros((n,n))
     
     for i in range(n):
         for j in range(i):
@@ -130,9 +130,9 @@ def diff_expm(M, dM):
 #------------------------------------------------------------------------------
     n,p =  M.shape   
     #Aux = scipy,zeros((2*n,2*n))
-    upper = scipy.concatenate((M, dM), axis=1)
-    lower = scipy.concatenate((scipy.zeros((n,n)), M), axis=1)
-    Aux   = scipy.concatenate((upper, lower), axis=0)
+    upper = numpy.concatenate((M, dM), axis=1)
+    lower = numpy.concatenate((numpy.zeros((n,n)), M), axis=1)
+    Aux   = numpy.concatenate((upper, lower), axis=0)
     # apply the matrix exp
     dexpm = linalg.expm(Aux)
 
@@ -161,15 +161,15 @@ def Stiefel_diff_exp(U, Delta, V, metric_alpha=0.0):
     #project onto orthogonal complement
     # X0 = (I-UU^T)Delta,  Y0 = (I-UU^T)V
     #  *************************************
-    A0 = scipy.dot(U.transpose(), Delta)
+    A0 = numpy.dot(U.transpose(), Delta)
     #enforce skew-symmetry
     A0 = 0.5*(A0-A0.T)
-    X0 =  Delta - scipy.dot(U, A0)
+    X0 =  Delta - numpy.dot(U, A0)
     # derivative d/dt (U.T * (Delta + tV))
-    dA0 = scipy.dot(U.transpose(), V)
+    dA0 = numpy.dot(U.transpose(), V)
     #enforce skew-symmetry
     dA0 = 0.5*(dA0-dA0.T)
-    Y0 = V - scipy.dot(U, dA0)   
+    Y0 = V - numpy.dot(U, dA0)   
     
     #differentiate qr-decomp. of X0+ t*Y0
     Q, dQ, R, dR = Stiefel_diff_QR(X0, Y0)
@@ -182,14 +182,14 @@ def Stiefel_diff_exp(U, Delta, V, metric_alpha=0.0):
     # metric_factor
     v = 1.0/(metric_alpha +1.0)
     # construct M block matrix
-    upper = scipy.concatenate((v*A0, -R.transpose()), axis=1)
-    lower = scipy.concatenate((R, scipy.zeros((p,p))), axis=1)
-    M     = scipy.concatenate((upper, lower), axis=0)
+    upper = numpy.concatenate((v*A0, -R.transpose()), axis=1)
+    lower = numpy.concatenate((R, numpy.zeros((p,p))), axis=1)
+    M     = numpy.concatenate((upper, lower), axis=0)
     #
     # construct dM block matrix
-    upper = scipy.concatenate((v*dA0, -dR.transpose()), axis=1)
-    lower = scipy.concatenate((dR, scipy.zeros((p,p))), axis=1)
-    dM     = scipy.concatenate((upper, lower), axis=0)
+    upper = numpy.concatenate((v*dA0, -dR.transpose()), axis=1)
+    lower = numpy.concatenate((dR, numpy.zeros((p,p))), axis=1)
+    dM     = numpy.concatenate((upper, lower), axis=0)
     # differentiate the matrix exp
     # bonus: the matrix exp of M is computed simultaneously
     # both are needed in the following
@@ -215,18 +215,18 @@ def Stiefel_diff_exp(U, Delta, V, metric_alpha=0.0):
         #    (0, dQ) expm(M)  (exp(A) ;0) 
         #   +(U,  Q) dexpm(M) (exp(A) ;0)
         #   +(U,  Q) expm(M)  (dexp(A);0)       
-        dSt_Exp = scipy.dot(dQ, scipy.dot( expM_I_0[p:2*p, 0:p], expA))\
-                + scipy.dot(U,  scipy.dot(dexpM_I_0[0:p,   0:p], expA))\
-                + scipy.dot(Q,  scipy.dot(dexpM_I_0[p:2*p, 0:p], expA))\
-                + scipy.dot(U,  scipy.dot( expM_I_0[0:p,   0:p],dexpA))\
-                + scipy.dot(Q,  scipy.dot( expM_I_0[p:2*p, 0:p],dexpA))
+        dSt_Exp = numpy.dot(dQ, numpy.dot( expM_I_0[p:2*p, 0:p], expA))\
+                + numpy.dot(U,  numpy.dot(dexpM_I_0[0:p,   0:p], expA))\
+                + numpy.dot(Q,  numpy.dot(dexpM_I_0[p:2*p, 0:p], expA))\
+                + numpy.dot(U,  numpy.dot( expM_I_0[0:p,   0:p],dexpA))\
+                + numpy.dot(Q,  numpy.dot( expM_I_0[p:2*p, 0:p],dexpA))
     else:
         # case: canonical metric
         # compute
         # (0, dQ) expm(M) (I;0) + (U,Q)*dexpm(M) (I;0)
-        dSt_Exp = scipy.dot(dQ, expM_I_0[p:2*p, 0:p])\
-                + scipy.dot(U, dexpM_I_0[0:p, 0:p])\
-                + scipy.dot(Q, dexpM_I_0[p:2*p, 0:p])
+        dSt_Exp = numpy.dot(dQ, expM_I_0[p:2*p, 0:p])\
+                + numpy.dot(U, dexpM_I_0[0:p, 0:p])\
+                + numpy.dot(Q, dexpM_I_0[p:2*p, 0:p])
                 
     return dSt_Exp
 #------------------------------------------------------------------------------
@@ -264,30 +264,30 @@ def Stiefel_diff_SVD(Y, dY, U, S, V):
     # reciprocal singular values
     S_inv = 1.0/S
     # derivatives of singular values
-    dS = scipy.zeros((p,))
+    dS = numpy.zeros((p,))
     for k in range(p):
-        dS[k] = scipy.dot(U[:,k].T, scipy.dot(dY, V[:,k]))
+        dS[k] = numpy.dot(U[:,k].T, numpy.dot(dY, V[:,k]))[0,0]
 
     # normal component of dU
     # compute V * S^(-1) = V \odot Ones * sinv_vec
     #
-    VSinv     = scipy.dot(V[:,0:p], scipy.diag(S_inv))
-    dYVSinv   = scipy.dot(dY, VSinv)
-    UTdYVSinv = scipy.dot(U.T, dYVSinv)
-    dU_bot    = dYVSinv - scipy.dot(U, UTdYVSinv)
+    VSinv     = numpy.dot(V[:,0:p], numpy.diag(S_inv))
+    dYVSinv   = numpy.dot(dY, VSinv)
+    UTdYVSinv = numpy.dot(U.T, dYVSinv)
+    dU_bot    = dYVSinv - numpy.dot(U, UTdYVSinv)
 
     # tangential component requires derivative of V:
     # it holds: dV = V*Alpha,  Alpha skew
     #
-    #dYTY = scipy.dot(dY.T, Y) + scipy.dot(Y.T,dY)
-    UTdY = scipy.dot(U.T, dY)
+    #dYTY = numpy.dot(dY.T, Y) + numpy.dot(Y.T,dY)
+    UTdY = numpy.dot(U.T, dY)
 
 
     # assemble Alpha without explicitely computing d/dt (Y'*Y)
     # first pxp block
-    Alpha_p = scipy.zeros((p,p))
+    Alpha_p = numpy.zeros((p,p))
     # comput U'*dY*V_p
-    C     = scipy.dot(UTdY, V[:,0:p])
+    C     = numpy.dot(UTdY, V[:,0:p])
     
     # upper pxp diagonal block
     for j in range(p): #j=1:p
@@ -296,29 +296,29 @@ def Stiefel_diff_SVD(Y, dY, U, S, V):
             Alpha_p[k,j] = -Alpha_p[j,k]
             # lower (m-p) x p block, approx s(j) = 0 for j>p+1
     
-    dV = scipy.dot(V[:,0:p], Alpha_p)
+    dV = numpy.dot(V[:,0:p], Alpha_p)
     # Check, if full V is available, i.e., V has m columns
 
     if (m == V.shape[1]) and (m>p):
-        Alpha_mp = scipy.zeros((m-p,p))
+        Alpha_mp = numpy.zeros((m-p,p))
         # comput U'*dY*V_p
-        C     = scipy.dot(UTdY, V[:,p:m])
+        C     = numpy.dot(UTdY, V[:,p:m])
         for j in range(m-p):
             for k in range(p):
                 Alpha_mp[j,k] = C[k,j]/S[k]
         # add components
-        dV = dV + scipy.dot(V[:,p:m], Alpha_mp)
+        dV = dV + numpy.dot(V[:,p:m], Alpha_mp)
     
     # return only upper pxp-blockof Alpha
     Alpha = Alpha_p
     # compute A = U'*dU
-    X = scipy.dot(scipy.dot(scipy.diag(S) , Alpha) - scipy.diag(dS), scipy.diag(S_inv))
+    X = numpy.dot(numpy.dot(numpy.diag(S) , Alpha) - numpy.diag(dS), numpy.diag(S_inv))
 
     A = UTdYVSinv + X
     # guarantee skew-symmetry
     A = 0.5*(A-A.T)
 
-    dU = dYVSinv + scipy.dot(U,X)
+    dU = dYVSinv + numpy.dot(U,X)
 
     return dU_bot, A, dU, Alpha, dS, dV
     #------------------------------------------------------------------------------
@@ -327,14 +327,14 @@ def Stiefel_diff_SVD(Y, dY, U, S, V):
 
 # test the QR-derivative:
 # check if V = dQ*R +Q*dR
-test_QRdiff = False
+test_QRdiff = 1
 if test_QRdiff:
     A = random.rand(10000, 200)
     V = random.rand(10000, 200)
     
     Q, dQ, R, dR = Stiefel_diff_QR(A, V)
     # does it match the derivative of A+tV:
-    dTest = scipy.dot(dQ, R) + scipy.dot(Q, dR)
+    dTest = numpy.dot(dQ, R) + numpy.dot(Q, dR)
     norm_check_diffQR = linalg.norm(dTest-V)/linalg.norm(V, 'fro')
     if norm_check_diffQR < 1.0e-12:
         print('QR-diff worked!')
@@ -350,7 +350,7 @@ if test_QRdiff:
 
 # test the SVD-derivative:
 
-test_SVDdiff = 0
+test_SVDdiff = 1
 if test_SVDdiff:
     Y  = random.rand(1000, 30)
     dY = random.rand(1000, 30)
@@ -359,15 +359,15 @@ if test_SVDdiff:
                                 full_matrices=False,\
                                 compute_uv=True,\
                                 overwrite_a=False)
-    V = scipy.matrix(VT.T)
+    V = numpy.matrix(VT.T)
     
     
     dU_bot, A, dU, Alpha, dS, dV = Stiefel_diff_SVD(Y, dY, U, S, V)
     # does it match the derivative of A+tV:
-    S = scipy.diag(S)
-    dTest = scipy.dot(dU, scipy.dot(S, VT)) +\
-            scipy.dot(U, scipy.dot(scipy.diag(dS), VT)) +\
-            scipy.dot(U, scipy.dot(S, dV.T))
+    S = numpy.diag(S)
+    dTest = numpy.dot(dU, numpy.dot(S, VT)) +\
+            numpy.dot(U, numpy.dot(numpy.diag(dS), VT)) +\
+            numpy.dot(U, numpy.dot(S, dV.T))
 
     norm_check_diffSVD = linalg.norm(dTest - dY, 'fro')/linalg.norm(dY, 'fro')
     if norm_check_diffSVD < 1.0e-10:
@@ -389,8 +389,8 @@ if test_SVDdiff:
     #  Y(t) =  (Y1+tdY1)*(Y2+tDY2)
     #--------------------------------------------------------------------------
     
-    Y  = scipy.dot(Y1, Y2)
-    dY = scipy.dot(dY1, Y2) +  scipy.dot(Y1, dY2)
+    Y  = numpy.dot(Y1, Y2)
+    dY = numpy.dot(dY1, Y2) +  numpy.dot(Y1, dY2)
     print('rank Y, rank dY:', numpy.linalg.matrix_rank(Y), ',', numpy.linalg.matrix_rank(dY))
     
     U, S, VT = scipy.linalg.svd(Y,\
@@ -406,17 +406,17 @@ if test_SVDdiff:
     p = St.shape[0]
     print('p =', p)
     # keep only the first p columns
-    Ut = scipy.matrix(U[:,0:p])
-    Vt = scipy.matrix(VT.T[:,0:p])
+    Ut = numpy.matrix(U[:,0:p])
+    Vt = numpy.matrix(VT.T[:,0:p])
     
     # diff-algorithm needs full orthogonal V
     dU_bot, A, dU, Alpha, dS, dV = Stiefel_diff_SVD(Y, dY, Ut, St, VT.T)
     # does it match the derivative Y(t)?
-    St = scipy.diag(St)
+    St = numpy.diag(St)
     # the output of "Stiefel_diff_SVD" is already the truncated matrices
-    dTest = scipy.dot(dU, scipy.dot(St, Vt.T)) +\
-            scipy.dot(Ut, scipy.dot(scipy.diag(dS), Vt.T)) +\
-            scipy.dot(Ut, scipy.dot(St, dV.T))
+    dTest = numpy.dot(dU, numpy.dot(St, Vt.T)) +\
+            numpy.dot(Ut, numpy.dot(numpy.diag(dS), Vt.T)) +\
+            numpy.dot(Ut, numpy.dot(St, dV.T))
 
     norm_check_diffSVD = linalg.norm(dTest - dY, 'fro')/linalg.norm(dY, 'fro')
     if norm_check_diffSVD < 1.0e-10:
@@ -428,16 +428,16 @@ if test_SVDdiff:
     #check sing val derivatives:
     # finite differences:
     h = 1.0e-6
-    Yh  = scipy.dot(Y1+h*dY1, Y2+h*dY2)   
+    Yh  = numpy.dot(Y1+h*dY1, Y2+h*dY2)   
     Uh, Sh, VTh = scipy.linalg.svd(Yh,\
                                 full_matrices=False,\
                                 compute_uv=True,\
                                 overwrite_a=False)
-    Yhm  = scipy.dot(Y1-h*dY1, Y2-h*dY2)   
+    Yhm  = numpy.dot(Y1-h*dY1, Y2-h*dY2)   
     Uhm, Shm, VThm = scipy.linalg.svd(Yhm,\
                                 full_matrices=False,\
                                 compute_uv=True,\
                                 overwrite_a=False)
     S_FD = (Sh[0:p]-Shm[0:p])/(2*h)
-    print(scipy.linalg.norm(S_FD-dS))
+    print('compared to finite differences', scipy.linalg.norm(S_FD-dS))
     
