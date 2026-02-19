@@ -11,12 +11,12 @@ clear; close all;
 
 %---User Settings----------------------------------------------------------
 % set dimensions
-n = 500;
-p = 30;
+n = 120%200;
+p = 6%30;
 
 % set number of random experiments
-runs = 10;       % number of runs
-dist = 0.7*pi;   % Riemannian distance of test data
+runs = 1;       % number of runs
+dist = 2.0*pi;   % Riemannian distance of test data
 tau =  1.0e-11;  % numerical convergence threshold
 %---End: User Settings-----------------------------------------------------
 

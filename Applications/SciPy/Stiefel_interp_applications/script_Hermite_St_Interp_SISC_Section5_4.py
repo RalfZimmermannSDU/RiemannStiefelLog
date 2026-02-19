@@ -24,6 +24,7 @@ sys.path.append( '../General_interp_tools/')
 
 import snapshot_analytic_mat    as snam
 import Stiefel_interp_funcs     as sifs
+#import Stiefel_interp_funcs_retra     as sifs
 
 import RBF_interp as RBF
 import Hermite_interp as HI
@@ -113,7 +114,7 @@ for k in range(len(mu_range)):
     V_true_list[k,:,:] = V
 
 # VISUAL CHECK, IF SVD IS ANALYTIC in MU
-check_analytic = 1
+check_analytic = 0
 if check_analytic:
     plt.rcParams.update({'font.size': 20})
     line_sigma_pm2,  = plt.plot(mu_range, S_true_list[:,p-3], 'k--', label = 'sigma p-2')
@@ -318,14 +319,14 @@ if do_Hermite:
 # *****************************************************************************
 do_plot = True
 if do_plot:
-    plt.rcParams.update({'font.size': 40})
+    plt.rcParams.update({'font.size': 10})
     if do_geo:
-        line_geod, = plt.plot(mu_range, subspace_errors, 'k-', linewidth=3, label = 'geodesic pw')
+        line_geod, = plt.plot(mu_range, subspace_errors, 'r-', linewidth=3, label = 'geodesic pw Pf')
     if do_tang_int:
-        line_RBF,  = plt.plot(mu_range, subspace_errors_RBF, 'k-.', linewidth=3, label = 'RBF full')
+        line_RBF,  = plt.plot(mu_range, subspace_errors_RBF, 'r-.', linewidth=3, label = 'RBF full Pf')
     if do_Hermite:
-        line_Hermite,  = plt.plot(mu_range, subspace_errors_Hermite_q, 'k-', linewidth=1, label = 'Hermite pw, q-based')
-        line_Hermite_p,  = plt.plot(mu_range, subspace_errors_Hermite_p, 'k:', linewidth=3, label = 'Hermite pw, p-based')
+        line_Hermite,  = plt.plot(mu_range, subspace_errors_Hermite_q, 'r-', linewidth=1, label = 'Hermite pw, q-based')
+        line_Hermite_p,  = plt.plot(mu_range, subspace_errors_Hermite_p, 'r:', linewidth=3, label = 'Hermite pw, p-based')
 
     plt.legend()
     plt.xlabel('mu')

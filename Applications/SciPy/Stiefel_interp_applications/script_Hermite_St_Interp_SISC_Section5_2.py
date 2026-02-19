@@ -24,6 +24,7 @@ sys.path.append('../General_interp_tools/')
 
 import snapshot_analytic_mat    as snam
 import Stiefel_interp_funcs     as sifs
+#import Stiefel_interp_funcs_retra     as sifs
 import RBF_interp as RBF
 import Hermite_interp as HI
 
@@ -44,10 +45,12 @@ print( "Which experiments are to be performed?")
 in_geo      = input('      Geodesic interpolation 0/1?: ')
 in_tang_int = input(' Tangent space interpolation 0/1?: ')
 in_Hermite  = input(' Cubic Hermite interpolation 0/1?: ')
+in_cubic    = input('Cubic 3-spline interpolation 0/1?: ')
 
 do_geo      = int(in_geo)
 do_tang_int = int(in_tang_int)
 do_Hermite  = int(in_Hermite)
+do_cubic_spline = int(in_cubic)
 
 # QR or SVD
 key = 'QR'
@@ -64,7 +67,7 @@ Y3 = 0.2*np.random.rand(n,p)
 # samples:
 # cheby-roots not important for local approaches but for the global 
 # tang interp method
-mu_samples = HI.ChebyRoots(-1.1, 1.1, 6)
+mu_samples = HI.ChebyRoots(-1.1, 1.1, 5)
 print('Cheby samples:', mu_samples)
 mu_range = np.linspace(mu_samples[0], mu_samples[-1], 101)
 
@@ -243,6 +246,41 @@ if do_Hermite:
 
 
 
+# *****************************************************************************
+# NEXT EXPERIMENT
+# Quasi-Cubic spline Interpolation, no derivative data
+# 
+# *****************************************************************************
+if do_cubic_spline:
+    subspace_errors_cs = np.zeros((len(mu_range),))
+    # preprocessing of sample data
+    Deltas, Vs_bound = sifs.Stiefel_Spline_interp_pre(U_matrix_list,\
+                                                      mu_samples,\
+                                                      alpha)
+    print('  ***   ')
+    print('Start of cubic spline interpolation (no derivatives')
+    print('  ***   ')
+    t_start = time.time()
+    # full interpolation
+    for k in range(int(len(mu_range))):
+        #trial point
+        mu_star = mu_range[k]
+        U_star = sifs.Stiefel_cubic_3pts_spline_interp(U_matrix_list,\
+                                             Deltas,\
+                                             Vs_bound,\
+                                             mu_samples,\
+                                             mu_star,\
+                                             alpha)
+    
+        subspace_errors_cs[k] = np.linalg.norm(U_true_list[k,:,:]-U_star, 'fro')/np.linalg.norm(U_true_list[k,:,:], 'fro')
+    t_end = time.time()
+    print('  ***   ')
+    print('Cubic-3pts-spline interpolation finished in ', t_end-t_start, 's')
+    print('  ***   ')
+# *****************************************************************************
+
+
+
 
 print("max errors:")
 if do_geo:
@@ -252,6 +290,8 @@ if do_tang_int:
 if do_Hermite:
     print("Hermite q:", subspace_errors_Hermite_q.max())
     print("Hermite p:", subspace_errors_Hermite_p.max())
+if do_cubic_spline:
+    print("Cubic 3pts spline:", subspace_errors_cs.max())  
 
 print("L2 relative errors:")
 dt = abs(mu_range[1] - mu_range[0])
@@ -262,7 +302,8 @@ if do_tang_int:
 if do_Hermite:
     print("Hermite q:", math.sqrt(dt)*np.linalg.norm(subspace_errors_Hermite_q))
     print("Hermite p:", math.sqrt(dt)*np.linalg.norm(subspace_errors_Hermite_p))
-
+if do_cubic_spline:
+    print("Cubic 3pts spline:", math.sqrt(dt)*np.linalg.norm(subspace_errors_cs)) 
  
 
 
@@ -283,6 +324,8 @@ if do_plot:
     if do_Hermite:
         line_Hermite_q,  = plt.plot(mu_range, subspace_errors_Hermite_q, 'r-', linewidth=1, label = 'Hermite pw, q-based')
         line_Hermite_p,  = plt.plot(mu_range, subspace_errors_Hermite_q, 'r:', linewidth=3, label = 'Hermite pw, p-based')
+    if do_cubic_spline:
+        line_cubic_spline,  = plt.plot(mu_range, subspace_errors_cs, 'b--', linewidth=3, label = 'cubic 3pt spline')
   
     #line_pts, = plt.plot(mu_samples, np.zeros((len(mu_samples),)),  'bo', linewidth=3, label = 'fk')
     plt.legend()
