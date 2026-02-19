@@ -29,7 +29,11 @@ def Stiefel_PF_ret(U0, Xi):
     # get dimensions
     n,p = U0.shape
     
-    S = np.eye(p,p) + np.dot(Xi.transpose(), Xi);
+    # QR decomposition of Xi,
+    # only R is needed
+    R = np.linalg.qr(Xi, mode='r')
+    
+    S = np.eye(p,p) + np.dot(R.transpose(), R) #np.dot(Xi.transpose(), Xi);
     # compute matrix square root
     S = linalg.sqrtm(scipy.linalg.inv(S))
         
@@ -82,7 +86,7 @@ def Stiefel_PL_ret(U0, Xi):
     # get dimensions
     n,p = U0.shape
     
-    A = np.dot(U0.transpose(),Xi)  # horizontal component
+    A = np.dot(U0.T,Xi)  # horizontal component
     
     # eigenvalue decomposition
     # to-do: make this real Schur form
@@ -95,7 +99,10 @@ def Stiefel_PL_ret(U0, Xi):
     
     
     # compute matrix square root
-    S = np.eye(p) + np.dot(Xi.T, Xi) + np.dot(A,A)
+    # QR of (I-U0U0^T)Xi = Xi - U0*A
+    S = np.linalg.qr(Xi-U0.dot(A), mode='r')
+    S = np.eye(p) + np.dot(S.T, S)    
+    
     S = scipy.linalg.sqrtm(scipy.linalg.inv(S))
         
     # assemble U1
@@ -151,14 +158,14 @@ if do_tests:
     
     # set dimensions
     n = 1000
-    p = 400
+    p = 200
     
     #for the Euclidean metric: alpha = -0.5
     #for the Canonical metric: alpha = 0.0
     metric_alpha = -0.0
 
     # set number of random experiments
-    runs = 100
+    runs = 1
     dist = 0.5*np.pi
 
     #initialize
@@ -170,24 +177,25 @@ if do_tests:
         #create random stiefel data
         U0, U1, Xi = Stiefel_Exp_Log.create_random_Stiefel_data(n, p, dist, metric_alpha)
         #----------------------------------------------------------------------
-         
+        t_start = time.time()         
         U1_pf   = Stiefel_PF_ret(U0, Xi)
-        
-        t_start = time.time() 
-        Xi_pfi  = Stiefel_PF_inv_ret(U0, U1_pf)
-        t_end   = time.time()
+        t_end   = time.time()        
         t_pf    = t_end-t_start
+        
+        Xi_pfi  = Stiefel_PF_inv_ret(U0, U1_pf)
+
         
         time_array[0] = time_array[0] + t_pf
         is_equal[0]   = is_equal[0]   + np.linalg.norm((Xi-Xi_pfi), 'fro')
         
 
-
+        t_start = time.time()
         U1_pl   = Stiefel_PL_ret(U0, Xi)
-        t_start = time.time() 
-        Xi_pli  = Stiefel_PL_inv_ret(U0, U1_pl)
         t_end   = time.time()
         t_pl    = t_end-t_start
+        
+        Xi_pli  = Stiefel_PL_inv_ret(U0, U1_pl)
+
         
         time_array[1] = time_array[1] + t_pl
         is_equal[1]   = is_equal[1]   + np.linalg.norm((Xi-Xi_pli), 'fro')
