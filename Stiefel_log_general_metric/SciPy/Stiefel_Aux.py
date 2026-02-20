@@ -225,11 +225,10 @@ def Stiefel_approx_parallel_trans_p(M2, N2, A1, R1, nu):
 def SchurLog(V):
     # get dimensions
     n = V.shape[0]
-
     flag_negval = 0  # raise a flag, if there is a negative real eigenvalue
 
     # start with real Schur decomposition Q S Q^T
-    S, Q = scipy.linalg.schur(V)
+    S, Q = scipy.linalg.schur(V, output='real')
     # S must have 2x2-block diagonal form
     # create empty sparse matrix
     logS = scipy.sparse.lil_matrix((n,n))
@@ -250,8 +249,10 @@ def SchurLog(V):
             k = k+1
         else:
             # there is a 2x2 block S(k:k+1, k:k+1)
-            z = S[k,k] + 1j*S[k,k+1]
-            phi = np.log(z).imag
+            #z = S[k,k] + 1j*S[k,k+1]
+            #phi = np.log(z).imag
+            logtmp = scipy.linalg.logm(S[k:k+2, k:k+2])
+            phi = logtmp[0,1]
             logS[k,k+1] =  phi
             logS[k+1,k] = -phi
             k=k+2
