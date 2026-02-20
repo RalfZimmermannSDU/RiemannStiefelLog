@@ -14,6 +14,8 @@ import Stiefel_Exp_Log
 import Stiefel_Aux        as StAux
 import time
 
+import matplotlib.pyplot as plt
+
 #------------------------------------------------------------------------------
 # Polar decomposition retraction
 # P_U0 (Xi ) = (U0 + Xi)(In + XiT Xi )^−1/2
@@ -90,11 +92,14 @@ def Stiefel_PL_ret(U0, Xi):
     
     # eigenvalue decomposition
     # to-do: make this real Schur form
-    Lambda, N = linalg.eig(A)
+    #Lambda, N = linalg.eig(A)
     
-    D  = np.exp(Lambda) - Lambda
-    NDNH = np.dot(N*D, N.conj().T)
-    NDNH = NDNH.real # output must be real
+    #D  = np.exp(Lambda) - Lambda
+    #NDNH = np.dot(N*D, N.conj().T)
+    #NDNH = NDNH.real # output must be real
+    
+    # this seems to be faster
+    NDNH  = scipy.linalg.expm(A) - A
     U1 = np.dot(U0, NDNH) + Xi
     
     
@@ -161,8 +166,8 @@ if do_tests:
     p = 200
     
     #for the Euclidean metric: alpha = -0.5
-    #for the Canonical metric: alpha = 0.0
-    metric_alpha = -0.0
+    #for the Canonical metric: alpha =  0.0
+    metric_alpha = -0.5
 
     # set number of random experiments
     runs = 1
@@ -206,6 +211,66 @@ if do_tests:
     print('time for polar light retraction: ', time_array[1])
     print('normcheck', is_equal[1]/runs)  
     
+    
+    # compare to geodesic
+    # we still have the data triple
+    # U0, U1, Xi 
+    # with 
+    # exp_U0(Xi) = U1.
+    #
+    # geodesic:  exp_U0)(t*Xi), t \in [0,1]
+    # 
+    # any retraction R_U0 connecting the same endpoints:
+    # (1) compute R_U0^{-1}(U1). This yields tangent vector Xi_R.
+    # with 
+    #       R_U0(Xi_R) = U1.
+    # (2) evaluate retraction curve
+    #       R_U0(t*Xi), t\in [0,1]
+    # (3) compute error between geodesic and retraction curve
+
+    # tangent for polar factor retraction
+    Xi_pfi  = Stiefel_PF_inv_ret(U0, U1)
+    
+    # tangent for polar light retraction
+    Xi_pli  = Stiefel_PL_inv_ret(U0, U1)
+    
+    # discrete unit interval
+    num_t = 51
+    I_unit = np.linspace(0.0, 1.0, num=num_t)
+    
+    
+    errors_geo_approx = np.zeros((num_t,2))
+    
+    for k in range(num_t):
+        tk      = I_unit[k]
+        # geodesic at tk
+        Exp_tk  = Stiefel_Exp_Log.Stiefel_Exp(U0, tk*Xi, metric_alpha)
+        # PF retraction at tk
+        PF_tk   = Stiefel_PF_ret(U0, tk*Xi_pfi)
+        # PL retraction at tk
+        PL_tk   = Stiefel_PL_ret(U0, tk*Xi_pli)
+
+        error_PF= np.linalg.norm((Exp_tk-PF_tk), 'fro')
+        error_PL= np.linalg.norm((Exp_tk-PL_tk), 'fro')
+        errors_geo_approx[k,0] = error_PF
+        errors_geo_approx[k,1] = error_PL
+    
+    print('Max errors are:')
+    print(np.max(errors_geo_approx[:,0]), ' (polar factor)')
+    print(np.max(errors_geo_approx[:,1]), ' (polar light)')
+    do_plot = True
+    if do_plot:
+        plt.rcParams.update({'font.size': 40})
+
+        line_err_PF, = plt.plot(I_unit, errors_geo_approx[:,0], 'r-', linewidth=3, label = 'errors PF')
+        line_err_PL, = plt.plot(I_unit, errors_geo_approx[:,1], 'k-.', linewidth=3, label = 'errors PL')
+    
+    plt.legend()
+    plt.xlabel('t')
+    plt.ylabel('Errors')
+    plt.show()
+        
+        
 # End: if do_tests
 
 
