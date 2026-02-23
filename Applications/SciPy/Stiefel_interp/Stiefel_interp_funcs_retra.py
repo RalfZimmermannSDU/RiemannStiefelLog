@@ -47,6 +47,7 @@ sys.path.append('../../../Stiefel_log_general_metric/SciPy/')
 sys.path.append('../General_interp_tools/')
 
 import Stiefel_Exp_Log          as StEL
+import Stiefel_retractions      as StRe
 import RBF_interp               as RBF
 import Hermite_interp           as HI
 import Spline_interp            as SI
