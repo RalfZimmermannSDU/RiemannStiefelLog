@@ -60,10 +60,13 @@ import Stiefel_diff_tools       as Stdf
 # compute tangent space images
 # 1D only
 #------------------------------------------------------------------------------
-def Stiefel_geodesic_interp_pre(Locs, samples, metric_alpha = 0.0):
+def Stiefel_geodesic_interp_pre(Locs, samples, metric_alpha = 0.0, retra=1):
     print('  ***   ')
-    print('preprocessing of geodesic data')
+    print('preprocessing of data for geodesic linear interpolation')
     print('  ***   ')
+    print('3 retractions implemented:')
+    print('1: Riemann exp, 2: polar factor retraction, 3: polar light retraction')
+    print('Retraction ', retra, ' is chosen.')
     t_start = time.time()
     
     # numerical accuracy: To Do: should be set relative!
@@ -78,11 +81,22 @@ def Stiefel_geodesic_interp_pre(Locs, samples, metric_alpha = 0.0):
     Deltas = np.zeros((dims[0]-1, dims[1], dims[2]))
     
     for k in range(len(samples)-1):
-        # step 1: get tangent vector via Stiefel log
-        Delta, iter_conv = StEL.Stiefel_Log(Locs[k,:,:],\
-                                            Locs[k+1, :,:],\
-                                            tau,\
-                                            metric_alpha)
+        # step 1: get tangent vectors
+        if retra == 1:
+            #via Stiefel log
+            Delta, iter_conv = StEL.Stiefel_Log(Locs[k,:,:],\
+                                                Locs[k+1,:,:],\
+                                                tau,\
+                                                metric_alpha)
+        elif retra == 2:
+            # polar factor retraction
+            Delta =  StRe.Stiefel_PF_inv_ret(Locs[k,:,:],\
+                                             Locs[k+1,:,:])             
+        elif retra == 3:
+            # polar light retraction
+            Delta =  StRe.Stiefel_PL_inv_ret(Locs[k,:,:],\
+                                             Locs[k+1,:,:])
+        # store current tangent vector in matrix array
         Deltas[k,:,:] = Delta
     t_end = time.time()
     print('  ***   ')
@@ -100,7 +114,8 @@ def Stiefel_geodesic_interp(Locs,\
                             Deltas,\
                             samples,\
                             mu_star,\
-                            metric_alpha = 0.0):
+                            metric_alpha = 0.0,
+                            retra=1):
     # step 0: in which interval does mu_star belong?
     # assumption: samples is an ordered list of mu-values
     aux = abs(samples - mu_star)
@@ -115,8 +130,15 @@ def Stiefel_geodesic_interp(Locs,\
     # step 2: linear interpolation in tangent space
     lin_factor = (mu_star - samples[pos])/(samples[pos+1] - samples[pos])
     # step 3: back to manifold
-    U_star = StEL.Stiefel_Exp(Locs[pos,:,:], lin_factor*Delta, metric_alpha)
-
+    if retra ==1:
+        # via Riemann exp
+        U_star = StEL.Stiefel_Exp(Locs[pos,:,:], lin_factor*Delta, metric_alpha)
+    elif retra == 2:
+        # via polar factor retraction 
+        U_star = StRe.Stiefel_PF_ret(Locs[pos,:,:], lin_factor*Delta)
+    elif retra == 3:
+        # via polar light retraction
+        U_star = StRe.Stiefel_PL_ret(Locs[pos,:,:], lin_factor*Delta)
     return U_star
 #------------------------------------------------------------------------------
 
@@ -314,17 +336,15 @@ def Stiefel_RBF_tang_interp_pre(Locs, samples, metric_alpha=0.0, retra=1):
                                              Locs[k, :,:],\
                                              tau,\
                                              metric_alpha)  
-            Deltas[k,:,:] = Delta
         elif retra == 2:
             # polar factor retraction
             Delta =  StRe.Stiefel_PF_inv_ret(Locs[pos0,:,:],\
-                                                        Locs[k, :,:])  
-            Deltas[k,:,:] = Delta            
+                                             Locs[k, :,:])             
         elif retra == 3:
             # polar light retraction
             Delta =  StRe.Stiefel_PL_inv_ret(Locs[pos0,:,:],\
-                                                        Locs[k, :,:])  
-            Deltas[k,:,:] = Delta            
+                                             Locs[k, :,:])  
+        Deltas[k,:,:] = Delta            
     # reset base point to exact zero
     Deltas[pos0,:,:] = np.zeros((Locs.shape[1], Locs.shape[2]))
     t_end = time.time()
