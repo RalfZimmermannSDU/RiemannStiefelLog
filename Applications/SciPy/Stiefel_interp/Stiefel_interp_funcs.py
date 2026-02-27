@@ -28,6 +28,8 @@
 # * Stiefel_RBF_tang_interp(Locs,samples,Deltas,mu_star,Rinv,RBF_fun,metric_alpha = 0.0)
 #           - map all data points to single tangent space
 #              use RBF interpolation
+#  REMARK: FOR RBF INTERPOLATION, THREE RETRACTIONS ARE AVAILABLE
+#  1: Riemann exp, 2: polar factor retraction, 3: polar light retraction
 #
 #
 #
@@ -47,6 +49,7 @@ sys.path.append('../../../Stiefel_log_general_metric/SciPy/')
 sys.path.append('../General_interp_tools/')
 
 import Stiefel_Exp_Log          as StEL
+import Stiefel_retractions      as StRe
 import RBF_interp               as RBF
 import Hermite_interp           as HI
 import Spline_interp            as SI
@@ -289,10 +292,13 @@ def Stiefel_Hermite_interp(Locs,\
 #    => len(samples[0]) is the number of sample points
 #  * the 'mid-index' is used as tangent space center
 #------------------------------------------------------------------------------
-def Stiefel_RBF_tang_interp_pre(Locs, samples, metric_alpha=0.0):
+def Stiefel_RBF_tang_interp_pre(Locs, samples, metric_alpha=0.0, retra=1):
     print('  ***   ')
     print('Preprocessing of tangent space interpolation data')
     print('  ***   ')
+    print('3 retractions implemented:')
+    print('1: Riemann exp, 2: polar factor retraction, 3: polar light retraction')
+    print('Retraction ', retra, ' is chosen.')
     t_start = time.time()
     # 0.) allocate memory
     Deltas = np.zeros(Locs.shape)
@@ -302,11 +308,23 @@ def Stiefel_RBF_tang_interp_pre(Locs, samples, metric_alpha=0.0):
     for k in range(Deltas.shape[0]):
         # compute logarithm
         tau = 1.0e-11
-        Delta, iter_conv =  StEL.Stiefel_Log(Locs[pos0,:,:],\
+        if retra == 1:
+            # Riemann normal coordinates
+            Delta, iter_conv =  StEL.Stiefel_Log(Locs[pos0,:,:],\
                                              Locs[k, :,:],\
                                              tau,\
                                              metric_alpha)  
-        Deltas[k,:,:] = Delta
+            Deltas[k,:,:] = Delta
+        elif retra == 2:
+            # polar factor retraction
+            Delta =  StRe.Stiefel_PF_inv_ret(Locs[pos0,:,:],\
+                                                        Locs[k, :,:])  
+            Deltas[k,:,:] = Delta            
+        elif retra == 3:
+            # polar light retraction
+            Delta =  StRe.Stiefel_PL_inv_ret(Locs[pos0,:,:],\
+                                                        Locs[k, :,:])  
+            Deltas[k,:,:] = Delta            
     # reset base point to exact zero
     Deltas[pos0,:,:] = np.zeros((Locs.shape[1], Locs.shape[2]))
     t_end = time.time()
@@ -330,7 +348,8 @@ def Stiefel_RBF_tang_interp(Locs,\
                             mu_star,\
                             Rinv,\
                             RBF_fun,\
-                            metric_alpha = 0.0):
+                            metric_alpha = 0.0,\
+                            retra = 1):
     # 0.) allocate memory
     #Deltas = np.zeros(Locs.shape)
     # 1.) map all data to tangent space
@@ -346,8 +365,15 @@ def Stiefel_RBF_tang_interp(Locs,\
             
 
     # step 3: back to manifold
-    U_star = StEL.Stiefel_Exp(Locs[pos0,:,:], Delta_interp, metric_alpha)
-
+    if retra == 1:
+        # retraction = Riemann exp
+        U_star = StEL.Stiefel_Exp(Locs[pos0,:,:], Delta_interp, metric_alpha)
+    elif retra == 2:
+        # retraction = polar factor 
+        U_star = StRe.Stiefel_PF_ret(Locs[pos0,:,:], Delta_interp)
+    elif retra == 3:
+        # retraction = polar light 
+        U_star = StRe.Stiefel_PL_ret(Locs[pos0,:,:], Delta_interp)        
     return U_star
 #------------------------------------------------------------------------------   
 

@@ -40,7 +40,7 @@
 
 import scipy
 import numpy as np
-
+import time
 #------------------------------------------------------------------------------
 # alpha-metric on T_U St(n,p)
 #
@@ -214,13 +214,15 @@ def Stiefel_approx_parallel_trans_p(M2, N2, A1, R1, nu):
 #
 # local function: efficient Schur log evaluation
 #
-# Compute matrix function logm(V) of ORTHOGONAL matrix via Schur decomposition
-# Caution It returns only those blocks that are needed in Stiefel log.
+# Compute matrix function logm(V) of ORTHOGONAL matrix 
+# via Schur decomposition
+# REMARK: scipy's built-in function is faster, but does not provide
+#         the decomposition Q log S Q'
 #
 # Inputs:
 #      V : real orthogonal matrix
 # Outputs:
-#   logV :
+#   logV : matrix log of V (skew-symmetric)
 #--------------------------------------------------------------------------
 def SchurLog(V):
     # get dimensions
@@ -263,6 +265,66 @@ def SchurLog(V):
     return logV, flag_negval
 
 
+#--------------------------------------------------------------------------
+#
+# local function: efficient Schur exp evaluation
+#
+# Compute matrix function expm(V) of SKEW-SYMMETRIC matrix 
+# via Schur decomposition
+# REMARK: scipy's built-in function is faster, but does not provide
+#         the decomposition Q exp S Q'
+#
+# Inputs:
+#      A : real skew-symmetric matrix
+# Outputs:
+#  expmA : matrix exponential of A
+#--------------------------------------------------------------------------
+def SchurExp(A):
+    # get dimensions
+    n = A.shape[0]
+    flag_negval = 0  # raise a flag, if there is a nonzero real eigenvalue
+    # start with real Schur decomposition Q S Q^T
+    S, Q = scipy.linalg.schur(A, output='real')
+    # S must have 2x2-block diagonal form
+    # all eigenvalues are 
+    #    purely imaginary -> 2x2 block
+    #    zero             -> 1x1 block
+    # create empty sparse matrix
+    expS = scipy.sparse.lil_matrix((n,n))
+    k = 0
+    # compute exp of 1x1 and 2x2 blocks
+    while k < n:
+        # is block of dim 1x1 => real eigenvalue? 
+        if k==n-1:
+            # last entry is 1x1 block
+            if abs(S)>1.0e-11:
+                print('Error in schur exp: theory predicts zero eigval')
+                flag_negval = 1
+            S[k,k] = 1 # = exp(0)
+            k = k+1
+        elif abs(S[k+1,k])<1.0e-13:
+            # off-diagonal is zero, hence 1x1block
+            if abs(S)>1.0e-11:
+                print('Error in schur exp: theory predicts zero eigval')
+                flag_negval = 1
+            S[k,k] = 1 # = exp(0)
+            k = k+1
+        else:
+            # there is a 2x2 block S(k:k+1, k:k+1)
+            x = S[k,k+1] # off-diagonal entry
+            expS[k,k]     =  np.cos(x)
+            expS[k+1,k+1] =  np.cos(x)
+            expS[k,k+1]   =  np.sin(x)
+            expS[k+1,k]   = -np.sin(x)
+            k=k+2
+    # end while
+    
+    # form log matrix
+    expV = np.dot(Q, expS.dot(Q.T))
+    return expV, flag_negval
+
+
+
 
 #------------------------------------------------------------------------------
 # Cayley trafo of X:
@@ -280,9 +342,34 @@ def Cayley(X):
     Xplus  = 0.5*X
     Xplus[diag_pp] = Xplus[diag_pp] + 1.0
     
-    Cay = np.dot(np.linalg.inv(Xminus), Xplus)
+    Cay = np.linalg.solve(Xminus, Xplus)
+    
     return Cay
 #------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# inverse Cayley trafo of Y:
+# Cayley^-1(Y) = 2(Y+I)^{-1}*(Y-I)
+# !NOT YET TESTED!
+#------------------------------------------------------------------------------
+def Cayley_inv(Y):
+#------------------------------------------------------------------------------
+    p = Y.shape[0]
+    # diagonal indicces
+    diag_pp = np.diag_indices(p)
+    # form Y-I
+    Yminus = 2*Y
+    Yminus[diag_pp] = Yminus[diag_pp] - 2.0
+    # form 2*(Y+I)
+    Yplus  = Y
+    Yplus[diag_pp]  = Yplus[diag_pp] + 1.0
+    #Cay_inv = np.dot(Yminus, np.linalg.inv(Yplus)) 
+    Cay_inv = np.linalg.solve(Yplus, Yminus)
+    
+    print('precheck1a', np.linalg.norm(Cay_inv.T + Cay_inv))
+    return Cay_inv
+#------------------------------------------------------------------------------
+
 
 
 #------------------------------------------------------------------------------

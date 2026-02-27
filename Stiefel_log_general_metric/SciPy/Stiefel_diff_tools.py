@@ -327,7 +327,7 @@ def Stiefel_diff_SVD(Y, dY, U, S, V):
 
 # test the QR-derivative:
 # check if V = dQ*R +Q*dR
-test_QRdiff = 1
+test_QRdiff = 0
 if test_QRdiff:
     A = random.rand(10000, 200)
     V = random.rand(10000, 200)
@@ -350,7 +350,7 @@ if test_QRdiff:
 
 # test the SVD-derivative:
 
-test_SVDdiff = 1
+test_SVDdiff = 0
 if test_SVDdiff:
     Y  = random.rand(1000, 30)
     dY = random.rand(1000, 30)
