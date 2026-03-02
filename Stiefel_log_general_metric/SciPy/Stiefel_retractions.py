@@ -118,7 +118,6 @@ def Stiefel_PL_ret(U0, Xi, mode=1):
         # seems to be faster than homebrew Schur exp
         expA_A  = scipy.linalg.expm(A) - A
     elif mode == 2:
-        print('PL mode2')
         # Cayley trafo
         expA_A  = StAux.Cayley(A) - A
     else:
@@ -189,7 +188,6 @@ def Stiefel_PL_inv_ret(U0, U1, mode=1):
     if mode == 1:
         Xi = U0.dot((linalg.logm(MRT) - MRT)) + U1.dot(RinvSRT)
     else:
-        print('PL inv mode2')
         # Cayley trafo for replacing the logm
         Xi = U0.dot((StAux.Cayley_inv(MRT) - MRT)) + U1.dot(RinvSRT)
     return Xi
@@ -207,16 +205,18 @@ def Stiefel_PL_inv_ret(U0, U1, mode=1):
 #  \/
 #******************************************************************************
 
-do_tests = 0
+do_tests = 1
 if do_tests:
     
     # set dimensions
-    n = 4000
-    p = 1000
+    n = 1000
+    p = 400
     
     #for the Euclidean metric: alpha = -0.5
     #for the Canonical metric: alpha =  0.0
     metric_alpha = -0.5
+    
+    mode = 2; # 1: expm, logm, 2: Cay, Cay_inv
 
     # set number of random experiments
     runs = 10
@@ -233,7 +233,7 @@ if do_tests:
   
     for j in range(runs):
     
-        if 0: # test cayley trafo
+        if 1: # test cayley trafo
             A = np.dot(U0.T, Xi)
             A = 0.5*(A-A.T)
         
@@ -241,10 +241,11 @@ if do_tests:
             t_start    = time.time() 
             Q = StAux.Cayley(A)
             Ac= StAux.Cayley_inv(Q)
+            Qc= StAux.Cayley(Ac)
             t_end      = time.time()        
             t_cay      = t_end-t_start
             print('t cay:', t_cay, 's', 'norm cayley check', linalg.norm(A-Ac))
-      
+            print('norm cayley check 2', linalg.norm(Q-Qc))
         
         # check if PF_inv(PF(Xi)) = Xi
         t_start = time.time()      
@@ -259,8 +260,8 @@ if do_tests:
 
         # check if PL_inv(PL(Xi)) = Xi
         t_start = time.time()
-        U1_pl   = Stiefel_PL_ret(U0, Xi)      
-        Xi_pli  = Stiefel_PL_inv_ret(U0, U1_pl)
+        U1_pl   = Stiefel_PL_ret(U0, Xi, mode)      
+        Xi_pli  = Stiefel_PL_inv_ret(U0, U1_pl, mode)
         t_end   = time.time()
         t_pl    = t_end-t_start
                
@@ -293,7 +294,7 @@ if do_tests:
     Xi_pfi  = Stiefel_PF_inv_ret(U0, U1)
     
     # tangent for polar light retraction
-    Xi_pli  = Stiefel_PL_inv_ret(U0, U1)
+    Xi_pli  = Stiefel_PL_inv_ret(U0, U1, mode)
     
     # discrete unit interval
     num_t = 4
@@ -309,7 +310,7 @@ if do_tests:
         # PF retraction at tk
         PF_tk   = Stiefel_PF_ret(U0, tk*Xi_pfi)
         # PL retraction at tk
-        PL_tk   = Stiefel_PL_ret(U0, tk*Xi_pli)
+        PL_tk   = Stiefel_PL_ret(U0, tk*Xi_pli, mode)
 
         error_PF= np.linalg.norm((Exp_tk-PF_tk), 'fro')
         error_PL= np.linalg.norm((Exp_tk-PL_tk), 'fro')

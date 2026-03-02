@@ -27,6 +27,11 @@
 #
 # * Cayley(X):
 #      - classical Cayley transformation
+#      - 2nd order approximation of expm
+#
+# * Cayley_inv(Y):
+#      - inverse of classical Cayley transformation
+#      - 2nd order approximation of logm
 #
 # * solvsymsyl(A, C):
 #      - solve the sylvester equation AX + XA = C, with A sym, C skew
@@ -336,12 +341,11 @@ def Cayley(X):
     # diagonal indicces
     diag_pp = np.diag_indices(p)
     # form I-0.5X
-    Xminus = -0.5*X
+    Xminus = -0.5*X  # data is multiplied and copied to new array
     Xminus[diag_pp] = Xminus[diag_pp] + 1.0
     # form I+0.5X
-    Xplus  = 0.5*X
+    Xplus  = 0.5*X   # data is multiplied and copied to new arra
     Xplus[diag_pp] = Xplus[diag_pp] + 1.0
-    
     Cay = np.linalg.solve(Xminus, Xplus)
     
     return Cay
@@ -349,24 +353,24 @@ def Cayley(X):
 
 #------------------------------------------------------------------------------
 # inverse Cayley trafo of Y:
-# Cayley^-1(Y) = 2(Y+I)^{-1}*(Y-I)
-# !NOT YET TESTED!
+# Cayley^-1(Y) = (Y+I)^-1*2*(Y-I)*
 #------------------------------------------------------------------------------
 def Cayley_inv(Y):
 #------------------------------------------------------------------------------
     p = Y.shape[0]
     # diagonal indicces
     diag_pp = np.diag_indices(p)
-    # form Y-I
-    Yminus = 2*Y
+    # build 2*(Y-I)
+    Yminus = 2*Y   # numpy makes a matrix copy
     Yminus[diag_pp] = Yminus[diag_pp] - 2.0
-    # form 2*(Y+I)
-    Yplus  = Y
-    Yplus[diag_pp]  = Yplus[diag_pp] + 1.0
+    #
+    Yplus  = Y.copy() # without multiplication, we need to take care
+                      # of making a matrix copy so that
+                      # changes on Yplus do not change Y    
+    Yplus[diag_pp]  = Yplus[diag_pp] + 1.0 
     #Cay_inv = np.dot(Yminus, np.linalg.inv(Yplus)) 
     Cay_inv = np.linalg.solve(Yplus, Yminus)
     
-    print('precheck1a', np.linalg.norm(Cay_inv.T + Cay_inv))
     return Cay_inv
 #------------------------------------------------------------------------------
 
