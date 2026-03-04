@@ -10,13 +10,8 @@ Created on Tue Feb 17 15:37:51 2026
 import numpy as np
 import scipy
 from   scipy import linalg
-import Stiefel_Exp_Log
 import Stiefel_Aux        as StAux
-import time
 
-import sys
-
-import matplotlib.pyplot as plt
 
 #------------------------------------------------------------------------------
 # Polar factor retraction
@@ -54,12 +49,6 @@ def Stiefel_PF_ret(U0, Xi):
         # sqrt( 1/(1+sing^2)), addition is elementwise
         Sing = np.sqrt(1/(Sing*Sing + 1))
         STS  = np.dot(VT.T*Sing, VT)
-    
-    
-    
-    #S = np.eye(p,p) + np.dot(R.transpose(), R) #np.dot(Xi.transpose(), Xi);
-    # compute matrix square root
-    #S = linalg.sqrtm(scipy.linalg.inv(S))
         
     # perform U1 = U0*M + Q*N
     U1 = np.dot((U0+Xi),STS)
@@ -191,156 +180,3 @@ def Stiefel_PL_inv_ret(U0, U1, mode=1):
         # Cayley trafo for replacing the logm
         Xi = U0.dot((StAux.Cayley_inv(MRT) - MRT)) + U1.dot(RinvSRT)
     return Xi
-
-
-
-
-
-
-
-#******************************************************************************
-#  ||
-#  ||     Down here: testing 
-# \  /
-#  \/
-#******************************************************************************
-
-do_tests = 1
-if do_tests:
-    
-    # set dimensions
-    n = 1000
-    p = 400
-    
-    #for the Euclidean metric: alpha = -0.5
-    #for the Canonical metric: alpha =  0.0
-    metric_alpha = -0.5
-    
-    mode = 2; # 1: expm, logm, 2: Cay, Cay_inv
-
-    # set number of random experiments
-    runs = 10
-    dist = 0.5*np.pi
-
-    #initialize
-    time_array  = np.zeros((2,))
-    is_equal    = np.zeros((2,))
-    
-    #----------------------------------------------------------------------
-    #create random stiefel data
-    U0, U1, Xi = Stiefel_Exp_Log.create_random_Stiefel_data(n, p, dist, metric_alpha)
-    #----------------------------------------------------------------------
-  
-    for j in range(runs):
-    
-        if 1: # test cayley trafo
-            A = np.dot(U0.T, Xi)
-            A = 0.5*(A-A.T)
-        
-            # cayley test
-            t_start    = time.time() 
-            Q = StAux.Cayley(A)
-            Ac= StAux.Cayley_inv(Q)
-            Qc= StAux.Cayley(Ac)
-            t_end      = time.time()        
-            t_cay      = t_end-t_start
-            print('t cay:', t_cay, 's', 'norm cayley check', linalg.norm(A-Ac))
-            print('norm cayley check 2', linalg.norm(Q-Qc))
-        
-        # check if PF_inv(PF(Xi)) = Xi
-        t_start = time.time()      
-        U1_pf   = Stiefel_PF_ret(U0, Xi)
-        Xi_pfi  = Stiefel_PF_inv_ret(U0, U1_pf)
-        t_end   = time.time()        
-        t_pf    = t_end-t_start
-        
-        time_array[0] = time_array[0] + t_pf
-        is_equal[0]   = is_equal[0]   + np.linalg.norm((Xi-Xi_pfi), 'fro')
-        
-
-        # check if PL_inv(PL(Xi)) = Xi
-        t_start = time.time()
-        U1_pl   = Stiefel_PL_ret(U0, Xi, mode)      
-        Xi_pli  = Stiefel_PL_inv_ret(U0, U1_pl, mode)
-        t_end   = time.time()
-        t_pl    = t_end-t_start
-               
-        time_array[1] = time_array[1] + t_pl
-        is_equal[1]   = is_equal[1]   + np.linalg.norm((Xi-Xi_pli), 'fro')
-        #sys.exit()
-    
-    print('time for polar factor retraction: ', time_array[0]/runs)
-    print('normcheck', is_equal[0]/runs)
-    print('time for polar light retraction: ', time_array[1]/runs)
-    print('normcheck', is_equal[1]/runs)  
-    
-    # compare to geodesic
-    # we still have the data triple
-    # U0, U1, Xi 
-    # with 
-    # exp_U0(Xi) = U1.
-    #
-    # geodesic:  exp_U0)(t*Xi), t \in [0,1]
-    # 
-    # any retraction R_U0 connecting the same endpoints:
-    # (1) compute R_U0^{-1}(U1). This yields tangent vector Xi_R.
-    # with 
-    #       R_U0(Xi_R) = U1.
-    # (2) evaluate retraction curve
-    #       R_U0(t*Xi), t\in [0,1]
-    # (3) compute error between geodesic and retraction curve
-
-    # tangent for polar factor retraction
-    Xi_pfi  = Stiefel_PF_inv_ret(U0, U1)
-    
-    # tangent for polar light retraction
-    Xi_pli  = Stiefel_PL_inv_ret(U0, U1, mode)
-    
-    # discrete unit interval
-    num_t = 4
-    I_unit = np.linspace(0.0, 1.0, num=num_t)
-    
-    
-    errors_geo_approx = np.zeros((num_t,2))
-    
-    for k in range(num_t):
-        tk      = I_unit[k]
-        # geodesic at tk
-        Exp_tk  = Stiefel_Exp_Log.Stiefel_Exp(U0, tk*Xi, metric_alpha)
-        # PF retraction at tk
-        PF_tk   = Stiefel_PF_ret(U0, tk*Xi_pfi)
-        # PL retraction at tk
-        PL_tk   = Stiefel_PL_ret(U0, tk*Xi_pli, mode)
-
-        error_PF= np.linalg.norm((Exp_tk-PF_tk), 'fro')
-        error_PL= np.linalg.norm((Exp_tk-PL_tk), 'fro')
-        errors_geo_approx[k,0] = error_PF
-        errors_geo_approx[k,1] = error_PL
-    
-    print('Max errors are:')
-    print(np.max(errors_geo_approx[:,0]), ' (polar factor)')
-    print(np.max(errors_geo_approx[:,1]), ' (polar light)')
-    do_plot = True
-    if do_plot:
-        plt.rcParams.update({'font.size': 40})
-
-        line_err_PF, = plt.plot(I_unit, errors_geo_approx[:,0], 'r-', linewidth=3, label = 'errors PF')
-        line_err_PL, = plt.plot(I_unit, errors_geo_approx[:,1], 'k-.', linewidth=3, label = 'errors PL')
-    
-    plt.legend()
-    plt.xlabel('t')
-    plt.ylabel('Errors')
-    plt.show()
-        
-        
-# End: if do_tests
-
-
-
-
-
-
-
-
-
-
