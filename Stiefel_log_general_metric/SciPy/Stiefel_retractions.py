@@ -41,7 +41,7 @@ def Stiefel_PF_ret(U0, Xi):
         Lambda = np.sqrt(1/(Lambda + 1))
         STS = np.dot(V*Lambda, V.T)
     else:
-        # SVD, slower, but more robust
+        # SVD, slower, but more accurate
         M, Sing, VT = scipy.linalg.svd(S,\
                                full_matrices=True,\
                                compute_uv=True,\
@@ -135,7 +135,7 @@ def Stiefel_PL_ret(U0, Xi, mode=1):
         Lambda = np.sqrt(1/(Lambda + 1))
         STS = np.dot(V*Lambda, V.T)
     else:
-        # SVD, slower, but more robust
+        # SVD, slower, but more accurate
         M, Sing, VT = scipy.linalg.svd(S,\
                                full_matrices=True,\
                                compute_uv=True,\
