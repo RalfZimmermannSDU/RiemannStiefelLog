@@ -82,17 +82,17 @@ U1 = Us_c[1,0:rank,0:rank]
 R = U1 @ np.linalg.inv(sc.sqrtm(U1.T @ U1))
 
 
-Nd = 81 # number of data samples
-ran = np.linspace(0.1,0.5,Nd)
+Nd = 10 # number of data samples
+ran = np.linspace(rs[0],rs[-1],Nd)
 
 
 # Create reference data
-create_ref_data = 0
+create_ref_data = 1
 if create_ref_data:
     Uref = np.zeros([Nd,Nx,rank])
     Uref_c = np.zeros([Nd,Nx,rank])
     Uref[0,:,:] = U0
-    Uref_c[0,:,:] = Us_c[0,:,:] # To simplify the code when we additionally have to align the signs and perform centering
+    Uref_c[0,:,:] = Us_c[0,:,:] # To simplify the code when we addi tionally have to align the signs and perform centering
 
     for i in range(1,Nd):
         y = simfish.fisher_KKP(L,T,Nx,Nt,ran[i])
@@ -109,9 +109,9 @@ if create_ref_data:
     np.save("Uref",Uref)
     np.save("Uref_c",Uref_c)
     # Simulate system and obtain the basis
-else:
-    Uref = np.load("Uref.npy")
-    Uref_c = np.load("Uref_c.npy")
+# else:
+#     Uref = np.load("Uref.npy")
+#     Uref_c = np.load("Uref_c.npy")
 
 
 # Errors
@@ -120,6 +120,8 @@ Err = np.zeros([3,len(ran)])
 
 alpha  = -0.5
 retra = 3
+
+# Interpolate using the Polar light
 Deltas = sifs.Stiefel_geodesic_interp_pre(Us_c,\
                                             rs,\
                                             alpha,\
@@ -137,7 +139,7 @@ for k in range(len(ran)):
     
     Err[retra-1,k] = np.linalg.norm( U_star - Uref_c[k,:,:],'fro') / np.linalg.norm(Uref_c[k,:,:],'fro')
 
-
+# Interpolate using Riemann normal coords and Polar factor retraction
 for r in range(1,3):
     retra = r
 
@@ -158,7 +160,8 @@ for r in range(1,3):
                                                 retra)
         
         Err[r-1,k] = np.linalg.norm( U_star - Uref[k,:,:],'fro') / np.linalg.norm(Uref[k,:,:],'fro')
-#print(Uref[0,:,:].T @ Uref[0,:,:])
+
+
 print("max errors:")
 
 print("PW linear, retra1 (Riemann     ):", Err[0,:].max())
