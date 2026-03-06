@@ -21,8 +21,8 @@ import householder_tools as HST
 r = 0.3
 L = 30 
 T = 10 # end time
-Nx = 1000
-Nt = 1000000
+Nx = 100
+Nt = 100000
 
 rank = 6
 
