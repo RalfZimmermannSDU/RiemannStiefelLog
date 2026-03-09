@@ -23,11 +23,11 @@ def fisher_KKP(L,T,Nx,Nt,r,D = 1):
         Dxx[j,j] = -2 / dx ** 2
         Dxx[j,j+1] = 1 / dx ** 2
 
-    # Boundary conditions
-    Dxx[0,0] = -2
-    Dxx[0, 1] = 1
-    Dxx[Nx-1,Nx-2] = 1
-    Dxx[Nx-1,Nx-1] = -2
+    # Boundary conditions: Dxx[0,0] = Dxx[Nx-1,Nx-1] = 0
+    # Dxx[0,0] = -2
+    # Dxx[0, 1] = 1
+    # Dxx[Nx-1,Nx-2] = 1
+    # Dxx[Nx-1,Nx-1] = -2
 
     for i in range(1,Nt):
         nonlin = r * u[:,i-1] * (1 - u[:,i-1])
