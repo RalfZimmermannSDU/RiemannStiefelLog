@@ -108,7 +108,7 @@ ran = np.linspace(rs[0],rs[-1],Nd)
 di = np.zeros([Nd,1])
 sigmap_s = np.zeros([3,Nd])
 # Create reference data
-create_ref_data = 0
+create_ref_data = 1
 if create_ref_data:
     Uref = np.zeros([Nd,Nx,rank])
     Uref_c = np.zeros([Nd,Nx,rank])
