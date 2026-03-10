@@ -99,9 +99,9 @@ def Stiefel_geodesic_interp_pre(Locs, samples, metric_alpha = 0.0, retra=1):
         # store current tangent vector in matrix array
         Deltas[k,:,:] = Delta
     t_end = time.time()
-    print('  ***   ')
-    print('Preprocessing of geodesic data finished in ', t_end-t_start, 's')
-    print('  ***   ')
+    # print('  ***   ')
+    # print('Preprocessing of geodesic data finished in ', t_end-t_start, 's')
+    # print('  ***   ')
     return Deltas
 #------------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ def Stiefel_geodesic_interp(Locs,\
         pos = index-1
     else:
         pos = index
-
+    
     # step 1: get tangent vector
     Delta = Deltas[pos,:,:]
     # step 2: linear interpolation in tangent space

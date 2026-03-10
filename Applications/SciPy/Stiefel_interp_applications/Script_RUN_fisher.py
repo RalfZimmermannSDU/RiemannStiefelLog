@@ -29,8 +29,9 @@ rank = 6
 
 print("Compute rank " + str(rank) + " POD bases of the Fisher KKP equation for varying r")
 
+#rs = np.array([0.5,0.9])
 rs = np.array([0.1,0.5,0.9])
-
+#rs = np.array([0.1,0.3,0.5,0.7,0.9])
 
 Us = np.zeros([len(rs),Nx,rank])
 print("----------------------------------------------")
@@ -48,17 +49,17 @@ for i in range(len(rs)):
     Us[i,:,:] = U[:,0:rank]
 
 # Align the coordinates wrt. U0 = Us[0,:,:]
-U0 = np.copy(Us[1,:,:])
+sign = False
+if sign:
+    ref_for_sign = 1
+    U0 = np.copy(Us[ref_for_sign,:,:])
+    for i in range(len(rs)):
+        
+        Coord = Us[i,:,:].T @ U0
+        Csign = np.diag(np.sign(np.diag(Coord)))
+        Us[i,:,:] = Us[i,:,:] @ Csign
+        
 
-i = 0
-Coord = Us[i,:,:].T @ U0
-Csign = np.diag(np.sign(np.diag(Coord)))
-Us[i,:,:] = Us[i,:,:] @ Csign
-
-i = 2
-Coord = Us[i,:,:].T @ U0
-Csign = np.diag(np.sign(np.diag(Coord)))
-Us[i,:,:] = Us[i,:,:] @ Csign
 
 # for i in [0,2]#range(0,len(rs)):
 #     Coord = Us[i,:,:].T @ U0
@@ -99,14 +100,15 @@ for i in range(len(rs)):
 
 #Nd = 21 # number of data samples
 #ran = np.linspace(rs[0],rs[-1],Nd)
-Nd = 91
+Nd = 81
 ran = np.linspace(rs[0],rs[-1],Nd)
 #ran = np.linspace(0.1,0.6,Nd)
 
 
 di = np.zeros([Nd,1])
+sigmap_s = np.zeros([3,Nd])
 # Create reference data
-create_ref_data = 1
+create_ref_data = 0
 if create_ref_data:
     Uref = np.zeros([Nd,Nx,rank])
     Uref_c = np.zeros([Nd,Nx,rank])
@@ -121,13 +123,22 @@ if create_ref_data:
                             compute_uv=True,\
                             overwrite_a=True)
         
-        # align signs -> map to centered coordinates
-        Coord = U[:,0:rank].T @ U0
-        Csign = np.diag(np.sign(np.diag(Coord)))
+        # align signs 
+        sigmap_s[:,i] = S[rank-2:rank+1]
+        
+        if sign:
+            Coord = U[:,0:rank].T @ U0
+            Csign = np.diag(np.sign(np.diag(Coord)))
 
-        Uref[i,:,:] = U[:,0:rank] @ Csign;
-        Uref_c[i,:,:] = Uref[i,:,:]#HST.apply_WYT(Uref[i,:,:] ,W,Y);
+            Uref[i,:,:] = U[:,0:rank] @ Csign;
+            Uref_c[i,:,:] = Uref[i,:,:]#HST.apply_WYT(Uref[i,:,:] ,W,Y);
+            print(np.diag(Csign))
 
+        else:
+            Uref[i,:,:] = U[:,0:rank] 
+            Uref_c[i,:,:] = Uref[i,:,:]#HST.apply_WYT(Uref[i,:,:] ,W,Y);
+
+        
         # Track Riemannian distance from U0
         # di[i] = EL.distStiefel(U0,Uref[i,:,:])
     np.save("Uref",Uref)
@@ -137,6 +148,19 @@ else:
     Uref = np.load("Uref.npy")
     Uref_c = np.load("Uref_c.npy")
 
+plotSigma_p = False
+if plotSigma_p:
+    plt.rcParams.update({'font.size': 20})
+    # for i in range(4):
+    #     line_sigma  = plt.plot(ran, sigmap_s[i,:], linewidth=3, label = '$\sigma$' + str(i))
+    line_sigma  = plt.plot(ran, sigmap_s[0,:], 'k--',linestyle =':', linewidth=3, label = '$\sigma_{p-1}$  ')
+    line_sigma  = plt.plot(ran, sigmap_s[1,:], 'b-', linewidth=3, label = '$\sigma_{p}$')
+    line_sigma  = plt.plot(ran, sigmap_s[2,:], 'r--.', linewidth=3, label = '$\sigma_{p+1}$')
+
+    plt.legend()
+    plt.xlabel('r')
+    plt.ylabel('$\sigma$')
+    plt.show()
 
 Err = np.zeros([3,len(ran)])
 alpha  = -0.5
@@ -150,39 +174,65 @@ Deltas = sifs.Stiefel_geodesic_interp_pre(Us_c,\
 
 U1 = Us_c[0,0:rank,0:rank]
 
-for k in range(len(ran)):
-    rs_star = ran[k]
-    U_star = sifs.Stiefel_geodesic_interp(Us_c,\
-                                            Deltas,\
-                                            rs,\
-                                            rs_star,\
-                                            alpha,
-                                            retra)
+for i in range(len(rs)-1):
+    Delta = Deltas[i,:,:]
+    A = Us_c[i,:,:].T @ Delta
+    B = Delta - Us_c[i,:,:] @ A
+    A_size = np.linalg.norm(A,'fro')
+    B_size = np.linalg.norm(B,'fro')
+
+    #print("F-norm of A: " + str(A_size))
+    #print("F-norm of B: " + str(B_size))
+
+# for k in range(len(ran)):
+#     rs_star = ran[k]
+#     U_star = sifs.Stiefel_geodesic_interp(Us_c,\
+#                                             Deltas,\
+#                                             rs,\
+#                                             rs_star,\
+#                                             alpha,
+#                                             retra)
     
-    Err[retra-1,k] = np.linalg.norm( U_star - Uref_c[k,:,:],'fro') / np.linalg.norm(Uref_c[k,:,:],'fro')
+#     Err[retra-1,k] = np.linalg.norm( U_star - Uref_c[k,:,:],'fro') / np.linalg.norm(Uref_c[k,:,:],'fro')
 
 # Interpolate using Riemann normal coords and Polar factor retraction
-for r in range(1,3):
-    retra = r
+comp_time = np.zeros([3,2])
+for d in range(100):
+    for r in range(1,4):
+        retra = r
+        t_start = time.time()
+        Deltas = sifs.Stiefel_geodesic_interp_pre(Us,\
+                                                    rs,\
+                                                    alpha,\
+                                                    retra)
+        comp_time[r-1,0] = comp_time[r-1,0] + (time.time()-t_start)
 
-    Deltas = sifs.Stiefel_geodesic_interp_pre(Us,\
-                                                rs,\
-                                                alpha,\
-                                                retra)
+        t_start = time.time()
+        for k in range(len(ran)):    
+            rs_star = ran[k]
+            U_star = sifs.Stiefel_geodesic_interp(Us,\
+                                                    Deltas,\
+                                                    rs,\
+                                                    rs_star,\
+                                                    alpha,
+                                                    retra)
+            
+            #Err[r-1,k] = np.linalg.norm( U_star - Uref[k,:,:],'fro') / np.linalg.norm(Uref[k,:,:],'fro')
+        comp_time[r-1,1] = comp_time[r-1,1] + (time.time()-t_start)
 
-    
-    #for k in range(len(ran)):
-    for k in range(len(ran)):    
-        rs_star = ran[k]
-        U_star = sifs.Stiefel_geodesic_interp(Us,\
-                                                Deltas,\
-                                                rs,\
-                                                rs_star,\
-                                                alpha,
-                                                retra)
-        
-        Err[r-1,k] = np.linalg.norm( U_star - Uref[k,:,:],'fro') / np.linalg.norm(Uref[k,:,:],'fro')
+        # print('  ***   ')
+        # print('Interpolation of ',len(ran),' data points took ', t_end-t_start, 's')
+        # print('  ***   ')
 
+
+print(comp_time/100)
+tim = time.time()
+U_star = sifs.Stiefel_geodesic_interp(Us,\
+                                                    Deltas,\
+                                                    rs,\
+                                                    rs_star,\
+                                                    alpha,
+                                                    retra)
 
 print("max errors:")
 
@@ -206,14 +256,14 @@ if do_plot:
 #print(np.linalg.norm(Us[1,:,:] - Uref_c[1,:,:]))
 
 # Plot
-x = np.linspace(-L,L,num = Nx)
-t = np.linspace(0,T,Nt)
+# x = np.linspace(-L,L,num = Nx)
+# t = np.linspace(0,T,Nt)
 
-t, x = np.meshgrid(t, x)
+# t, x = np.meshgrid(t, x)
 
-fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
-ls = LightSource(270, 45)
-rgb = ls.shade(y, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
-surf = ax.plot_surface(x, t, y, rstride=1, cstride=1, facecolors=rgb,
-                       linewidth=0, antialiased=False, shade=False)
-plt.show()
+# fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
+# ls = LightSource(270, 45)
+# rgb = ls.shade(y, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
+# surf = ax.plot_surface(x, t, y, rstride=1, cstride=1, facecolors=rgb,
+#                        linewidth=0, antialiased=False, shade=False)
+# plt.show()
