@@ -106,7 +106,8 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0):
 #------------------------------------------------------------------------------
     # get dimensions
     n,p = U0.shape
-
+    
+    check_det = 1
     # step 1
     M = scipy.dot(U0.T, U1)
     # step 2
@@ -120,7 +121,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0):
     # step 3
     MN = scipy.concatenate((M,N), axis=0)    
     # orthogonal completion
-    V, R = scipy.linalg.qr(MN, overwrite_a=True,\
+    V, Rq = scipy.linalg.qr(MN, overwrite_a=True,\
                                lwork=None,\
                                mode='full',\
                                pivoting=False,\
@@ -145,6 +146,18 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=0):
     #if numpy.absolute(norm_logmV - numpy.pi) < 1.0e-10:
     #    print('Initial matrix log not well defined: Distance to pi =',\
     #           norm_logmV -numpy.pi)
+    
+    # check if V \in SO(2p)
+    if check_det:
+        # ensure that V \in SO(n) 
+        if do_Procrustes:
+            if numpy.power(-1,p)*numpy.prod(numpy.diag(Rq[:p,:p]))*numpy.linalg.det(numpy.dot(R,D.T)) < 0:
+                # flip sign of one column
+                V[:,p] = (-1)*V[:,p]
+        else:
+            if numpy.power(-1,p)*numpy.prod(numpy.diag(Rq[:p,:p])) < 0:
+                # flip sign of one column
+                V[:,p] = (-1)*V[:,p]
              
     conv_hist = []                                                     
     # step 4: FOR-Loop
