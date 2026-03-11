@@ -172,7 +172,7 @@ def Stiefel_PL_inv_ret(U0, U1, mode=1):
     MRT = M.dot(RT)
     
     RinvSRT = np.dot( (RT.T*(1./S)), RT)
-    
+
     # assemble Xi
     if mode == 1:
         Xi = U0.dot((linalg.logm(MRT) - MRT)) + U1.dot(RinvSRT)
