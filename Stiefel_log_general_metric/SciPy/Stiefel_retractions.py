@@ -11,6 +11,7 @@ import numpy as np
 import scipy
 from   scipy import linalg
 import Stiefel_Aux        as StAux
+import time 
 
 
 #------------------------------------------------------------------------------
@@ -195,7 +196,7 @@ def Stiefel_PL_inv_ret(U0, U1, mode=1):
 # Output arguments
 #          U1    : R_U0(xi)
 #------------------------------------------------------------------------------
-def Stiefel_QR_ret(U0, Xi,mode = 1):
+def Stiefel_QR_ret(U0, Xi):
     Q,R = np.linalg.qr(U0 + Xi,mode='reduced')
 
     S = np.diag(np.sign(np.diag(R)))
@@ -261,14 +262,128 @@ def Stiefel_QR_inv_ref(X,Q):
     Xi = Q @ R - X
     return Xi
 
+#------------------------------------------------------------------------------
+# Quasi geodesic
+# R_U0(xi) = [U Q] expm(t (A -B^T; B 0 )) * Ip, A,B are p x x matrices.
+#                                                              
+#
+# Based on Bendokat et.al. "Eﬃcient Quasi-Geodesics on the Stiefel Manifold"
+#
+# Input arguments      
+#          U0    : base point on St(n,p)
+#          Xi : tangent vector in T_U0 St(n,p)
+# Output arguments
+#          U1    : R_U0(xi)
+#------------------------------------------------------------------------------
+def Stiefel_Quasi_geod(U,Xi):
+    A = U.T @ Xi
+    UperpB = Xi - U @ A
+    Q, S, VT = linalg.svd(UperpB, full_matrices=False,compute_uv=True, overwrite_a=True)
+
+    Y = (U @ (VT.T @ np.diag(np.cos(S))) + Q @ np.diag(np.sin(S))) @ (VT @ linalg.expm(A))
+    return Y
+
+#------------------------------------------------------------------------------
+# Inverse Quasi geodesic
+# R_inv_U0(U1) = xi 
+#                                             
+# Based on Bendokat et.al. "Eﬃcient Quasi-Geodesics on the Stiefel Manifold"
+# Algorithm 1 
+#
+# Input arguments      
+#          U0    : base point on St(n,p)
+#          Xi : tangent vector in T_U0 St(n,p)
+# Output arguments
+#          U1    : R_U0(xi)
+#------------------------------------------------------------------------------
+def Stiefel_inv_Quasi_geod(U0,U1,mode = 1):
+    if mode == 1:
+        Q, S, RT = linalg.svd(U1.T@U0)
+        R = Q @ RT
+        Ustar = U1 @ R
+        A = linalg.logm(R.T)
+        Q,S,VT = linalg.svd(Ustar - U0 @ (U0.T @ Ustar), full_matrices=False,compute_uv=True, overwrite_a=True)
+        Sig = np.asin(S)
+
+        Xi = U0 @ A + Q @ (np.diag(Sig) @ VT)
+        return Xi    
+    
+    elif mode == 2: # Short-econ geod. with Cayley
+        tQ, tS, tRT = linalg.svd(U1.T@U0)
+        R = tQ @ tRT
+        a = linalg.logm(R.T)
+        Ustar = U1 @ R
+
+        Q, S,VT = linalg.svd(Ustar - U0 @ (U0.T @ Ustar), full_matrices=False,compute_uv=True, overwrite_a=True)
+
+        Sig = np.asin(S)
+
+        SinS = np.diag(np.sin(np.copy(Sig)))
+        CosS = np.diag(np.cos(np.copy(Sig)))
+
+        Sig = np.diag(Sig)
+
+        b = Sig @ VT
+        c = -1/6 * b @ a @ b.T
+
+        
+        # Return A,B and C
+        T = np.concatenate((VT.T @ CosS @ VT @ R.T, -VT.T @ SinS @ linalg.expm(c)),axis = 1)
+        L = np.concatenate((SinS @ VT @ R.T, CosS @ linalg.expm(c)),axis=1)
+
+        ABTBC = StAux.Cayley_inv(np.concatenate((T,L),axis =0))
+        w,p = ABTBC.shape
+
+        p = int(p/2)
+
+        A = ABTBC[0:p,0:p]
+        B = ABTBC[p:2*p,0:p]
+        mBT = ABTBC[0:p,p:2*p]
+        C = ABTBC[p:2*p,p:2*p]
+
+        return A,B,mBT,C,ABTBC,Q
+    else: # Short-econ geod
+        tQ, tS, tRT = linalg.svd(U1.T@U0)
+        R = tQ @ tRT
+        a = linalg.logm(R.T)
+        Ustar = U1 @ R
+
+        Q, S,VT = linalg.svd(Ustar - U0 @ (U0.T @ Ustar), full_matrices=False,compute_uv=True, overwrite_a=True)
+
+        Sig = np.asin(S)
+
+        SinS = np.diag(np.sin(np.copy(Sig)))
+        CosS = np.diag(np.cos(np.copy(Sig)))
+
+        Sig = np.diag(Sig)
+
+        b = Sig @ VT
+        c = -1/6 * b @ a @ b.T
+
+        
+        # Return A,B and C
+        T = np.concatenate((VT.T @ CosS @ VT @ R.T, -VT.T @ SinS @ linalg.expm(c)),axis = 1)
+        L = np.concatenate((SinS @ VT @ R.T, CosS @ linalg.expm(c)),axis=1)
+
+        ABTBC = linalg.logm(np.concatenate((T,L),axis =0))
+        w,p = ABTBC.shape
+
+        p = int(p/2)
+
+        A = ABTBC[0:p,0:p]
+        B = ABTBC[p:2*p,0:p]
+        mBT = ABTBC[0:p,p:2*p]
+        C = ABTBC[p:2*p,p:2*p]
 
 
+        return A,B,mBT,C,ABTBC,Q
 
-testQR = True
+
+testQR = False
 if testQR:
     np.random.seed(345345)
     n = 10000
-    p = 30
+    p = 300
 
     A = np.random.rand(n,p)
     U0,R0 = np.linalg.qr(A,mode='reduced')
@@ -296,5 +411,37 @@ if testQR:
 
     Xi_inv = Stiefel_QR_inv_ref(U0,U1)
     print("*** Inverse retraction checks ***")
+    print("Norm of true xi: ",np.linalg.norm(Xi))
+    print("Norm of retrieved inverse: ", np.linalg.norm(Xi_inv))
     print("Difference of inverse and true tangent: ",np.linalg.norm(Xi_inv-Xi))
     
+
+testQuasi = False
+if testQuasi:
+    np.random.seed(345345)
+    n = 10000
+    p = 300
+
+    A = np.random.rand(n,p)
+    U0,R0 = np.linalg.qr(A,mode='reduced')
+   
+    # Generate a tangent vector at U0
+    A = np.random.rand(p,p)
+    A = 0.5 * (A.T - A) # Now A is p x p skew
+    Xi = U0 @ A
+    Xi = Xi / np.linalg.norm(Xi,'fro') # Normalize for stability 
+
+    U1 = Stiefel_PL_ret(U0,Xi)
+    U1 = Stiefel_Quasi_geod(U0,Xi)
+    flag_Is_Stiefel = False
+    if np.linalg.norm(U1.T @ U1 - np.eye(p)) < 1e-13:
+        flag_Is_Stiefel = True
+    print("*** Retraction checks ***")
+    print("U1 = R_U0(Xi) is Stiefel? ", flag_Is_Stiefel)
+    print("***                  ***")
+
+    Xi_inv = Stiefel_inv_Quasi_geod(U0,U1)
+    print("*** Inverse retraction checks ***")
+    print("Norm of true xi: ",np.linalg.norm(Xi))
+    print("Norm of retrieved inverse: ", np.linalg.norm(Xi_inv))
+    print("Difference of inverse and true tangent: ",np.linalg.norm(Xi_inv-Xi))
