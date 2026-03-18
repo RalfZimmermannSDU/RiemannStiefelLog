@@ -22,7 +22,7 @@ function [Delta, conv_hist] = Stiefel_Log(U0, U1, tau, do_Procrustes)
 %-------------------------------------------------------------
 
 % check_det     : 0/1 check if initial V0 is in SO(2p)
-check_det = 0;
+check_det = 1;
 
 % get dimensions
 [n,p] = size(U0);
@@ -48,6 +48,7 @@ V            = [[M;N], V(:,p+1:2*p)];  %          |M  X0|
                                        % now, V = |N  Y0| 
                                   
 % check if "V \in SO(2p)"
+% TODO: DETERMINANT CHECK BY COUNTING REFLECTION IN HOUSEHOLDER QR
 if check_det
     % ensure that "V \in SO(n)"                                       
     DET = det(V);
