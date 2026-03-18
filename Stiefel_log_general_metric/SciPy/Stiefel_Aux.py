@@ -45,6 +45,7 @@
 
 import scipy
 import numpy as np
+from scipy import linalg
 #------------------------------------------------------------------------------
 # alpha-metric on T_U St(n,p)
 #
@@ -328,7 +329,85 @@ def SchurExp(A):
     return expV, flag_negval
 
 
+#--------------------------------------------------------------------------
+#
+# Efficient exp evaluation of block-diagonal matrix
+# Input: T is a block-diagoanl matdix from a Schur decomposition
+# Output: exp
+def BlockExp(S):
+    n = S.shape[0]
 
+    expS = scipy.sparse.lil_matrix((n,n))
+    k = 0
+    # compute exp of 1x1 and 2x2 blocks
+    while k < n:
+        # is block of dim 1x1 => real eigenvalue? 
+        if k==n-1:
+            # last entry is 1x1 block
+            # if abs(S)>1.0e-11:
+            #     print('Error in schur exp: theory predicts zero eigval')
+            #     flag_negval = 1
+            expS[k,k] = 1 # = exp(0)
+            
+
+            k = k+1
+        elif abs(S[k+1,k])<1.0e-13:
+            # off-diagonal is zero, hence 1x1block
+            # if abs(S)>1.0e-11:
+            #     print('Error in schur exp: theory predicts zero eigval')
+            #     flag_negval = 1
+            expS[k,k] = 1 # = exp(0)
+            k = k+1
+        else:
+            # there is a 2x2 block S(k:k+1, k:k+1)
+            x = S[k,k+1] # off-diagonal entry
+            expS[k,k]     =  np.cos(x)
+            expS[k+1,k+1] =  np.cos(x)
+            expS[k,k+1]   = np.sin(x)
+            expS[k+1,k]   = -np.sin(x)
+
+            k=k+2
+    # end while
+    return expS
+
+#------------------------------------------------------------------------------
+# Efficient inversion of block matrix 
+#
+# Input: T a block diagional matrix with 2 x 2 blocks on the diagional.
+# Use the classic determiant formula for 2 x 2 blocks
+#
+# 
+def BlockInverse(T):
+    n = T.shape[0]
+    invT = scipy.sparse.lil_matrix((n,n))
+    k = 0
+    while k < n:
+        if k == n-1:
+            # Last entry is a 1x1 block
+            if abs(T[k,k]) < 1.0e-13:
+                print("Error: Last entry is zero-block")
+                print("Return 0")
+                return 0
+            invT[k,k] = 1/T[k,k]
+            k = k + 1
+        elif abs(T[k+1,k])<1.0e-13:
+            # off-diagonal is zero, hence 1x1block
+            invT[k,k] = 1/T[k,k]    
+            k = k + 1
+        else:
+            # Regular 2 x 2 block
+            #
+            # T^-1 = 1/det * | d -b
+            #                |-c  a
+            # Compute determinant 
+            det = linalg.det(T[k:k+2,k:k+2])
+            invT[k+1,k+1] = T[k,k] / det
+            invT[k,k+1] = -T[k,k+1] / det
+            invT[k+1,k] = -T[k+1,k] / det 
+            invT[k,k] = T[k+1,k+1] / det
+            k = k + 2
+    return invT        
+    
 
 #------------------------------------------------------------------------------
 # Cayley trafo of X:
@@ -349,7 +428,27 @@ def Cayley(X):
     
     return Cay
 #------------------------------------------------------------------------------
-
+#------------------------------------------------------------------------------
+# Cayley trafo of X:
+# Cayley(X) = (I - 0.5X)^{-1}*(I + 0.5X)
+#------------------------------------------------------------------------------
+def Cayley_Blocked(X):
+#------------------------------------------------------------------------------
+    p = X.shape[0]
+    # diagonal indicces
+    diag_pp = np.diag_indices(p)
+    # form I-0.5X
+    Xminus = -0.5*X  # data is multiplied and copied to new array
+    Xminus[diag_pp] = Xminus[diag_pp] + 1.0
+    # form I+0.5X
+    Xplus  = 0.5*X   # data is multiplied and copied to new arra
+    Xplus[diag_pp] = Xplus[diag_pp] + 1.0
+    XminusInv = BlockInverse(Xminus)
+    Cay = XminusInv @ Xplus
+    #Cay = np.linalg.solve(Xminus, Xplus)
+    
+    return Cay
+#-------------
 #------------------------------------------------------------------------------
 # inverse Cayley trafo of Y:
 # Cayley^-1(Y) = ((Y+I)^-1)*2*(Y-I)

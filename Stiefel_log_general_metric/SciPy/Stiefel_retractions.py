@@ -199,9 +199,9 @@ def Stiefel_PL_inv_ret(U0, U1, mode=1):
 def Stiefel_QR_ret(U0, Xi):
     Q,R = np.linalg.qr(U0 + Xi,mode='reduced')
 
-    S = np.diag(np.sign(np.diag(R)))
-    Q = Q @ S
-    R = S @ R
+    S = np.sign(np.diag(R))
+    Q = Q * S
+    R = S * R
     
     return Q, R
 
@@ -263,7 +263,7 @@ def Stiefel_QR_inv_ref(X,Q):
     return Xi
 
 #------------------------------------------------------------------------------
-# Quasi geodesic
+# Quasi geodesic, Grassmann-like
 # R_U0(xi) = [U Q] expm(t (A -B^T; B 0 )) * Ip, A,B are p x x matrices.
 #                                                              
 #
@@ -297,7 +297,7 @@ def Stiefel_Quasi_geod(U,Xi):
 #          U1    : R_U0(xi)
 #------------------------------------------------------------------------------
 def Stiefel_inv_Quasi_geod(U0,U1,mode = 1):
-    if mode == 1:
+    if mode == 1: # Grassmann-like
         Q, S, RT = linalg.svd(U1.T@U0)
         R = Q @ RT
         Ustar = U1 @ R
@@ -305,7 +305,7 @@ def Stiefel_inv_Quasi_geod(U0,U1,mode = 1):
         Q,S,VT = linalg.svd(Ustar - U0 @ (U0.T @ Ustar), full_matrices=False,compute_uv=True, overwrite_a=True)
         Sig = np.asin(S)
 
-        Xi = U0 @ A + Q @ (np.diag(Sig) @ VT)
+        Xi = U0 @ A + Q @ (Sig * VT.T).T
         return Xi    
     
     elif mode == 2: # Short-econ geod. with Cayley
@@ -318,8 +318,8 @@ def Stiefel_inv_Quasi_geod(U0,U1,mode = 1):
 
         Sig = np.asin(S)
 
-        SinS = np.diag(np.sin(np.copy(Sig)))
-        CosS = np.diag(np.cos(np.copy(Sig)))
+        SinS = np.sin(np.copy(Sig))
+        CosS = np.cos(np.copy(Sig))
 
         Sig = np.diag(Sig)
 
@@ -328,8 +328,8 @@ def Stiefel_inv_Quasi_geod(U0,U1,mode = 1):
 
         
         # Return A,B and C
-        T = np.concatenate((VT.T @ CosS @ VT @ R.T, -VT.T @ SinS @ linalg.expm(c)),axis = 1)
-        L = np.concatenate((SinS @ VT @ R.T, CosS @ linalg.expm(c)),axis=1)
+        T = np.concatenate(((VT.T * CosS)  @ VT @ R.T, (-VT.T * SinS) @ linalg.expm(c)),axis = 1)
+        L = np.concatenate(((SinS * VT.T).T @ R.T, (CosS * linalg.expm(c).T).T),axis=1)
 
         ABTBC = StAux.Cayley_inv(np.concatenate((T,L),axis =0))
         w,p = ABTBC.shape
@@ -352,18 +352,18 @@ def Stiefel_inv_Quasi_geod(U0,U1,mode = 1):
 
         Sig = np.asin(S)
 
-        SinS = np.diag(np.sin(np.copy(Sig)))
-        CosS = np.diag(np.cos(np.copy(Sig)))
+        SinS = np.sin(np.copy(Sig))
+        CosS = np.cos(np.copy(Sig))
 
-        Sig = np.diag(Sig)
+        Sig = Sig
 
-        b = Sig @ VT
+        b = (Sig * VT.T).T
         c = -1/6 * b @ a @ b.T
 
         
         # Return A,B and C
-        T = np.concatenate((VT.T @ CosS @ VT @ R.T, -VT.T @ SinS @ linalg.expm(c)),axis = 1)
-        L = np.concatenate((SinS @ VT @ R.T, CosS @ linalg.expm(c)),axis=1)
+        T = np.concatenate(((VT.T * CosS) @ VT @ R.T, (-VT.T * SinS) @ linalg.expm(c)),axis = 1)
+        L = np.concatenate(((SinS * VT.T).T @ R.T, (CosS * linalg.expm(c).T).T),axis=1)
 
         ABTBC = linalg.logm(np.concatenate((T,L),axis =0))
         w,p = ABTBC.shape
