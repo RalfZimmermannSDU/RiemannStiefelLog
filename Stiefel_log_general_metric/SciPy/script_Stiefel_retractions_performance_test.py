@@ -14,10 +14,11 @@ import time
 
 
 #******************************************************************************
-#  ||
-#  ||     Down here: testing 
-# \  /
-#  \/
+#  ||    Experiment associated with Figure 1 (to-do update reference) of
+#  ||    "AN NEW POLAR FACTOR RETRACTION ON THE STIEFEL
+# \  /    MANIFOLD WITH CLOSED-FORM INVERSE"
+#  \/     (The figure is produced with matlab based on the time_array
+#          that is computed in this script.)
 #******************************************************************************
 
 

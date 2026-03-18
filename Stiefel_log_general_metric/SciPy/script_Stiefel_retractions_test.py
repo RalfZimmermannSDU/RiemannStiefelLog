@@ -13,17 +13,16 @@ import Stiefel_Aux         as StAux
 import Stiefel_retractions as StRet
 import time
 
-import sys
-
 import matplotlib.pyplot as plt
 
 
 
 #******************************************************************************
-#  ||
-#  ||     Down here: testing 
-# \  /
-#  \/
+#  ||    Experiment associated with 
+#  ||    Table 1, Fig. 3, Fig. 4 (to-do update references) of
+#  ||    "AN NEW POLAR FACTOR RETRACTION ON THE STIEFEL
+# \  /    MANIFOLD WITH CLOSED-FORM INVERSE"
+#  \/     
 #******************************************************************************
 
 
@@ -35,11 +34,9 @@ p = 400
 #for the Euclidean metric: alpha = -0.5
 #for the Canonical metric: alpha =  0.0
 metric_alpha = -0.5
-    
-mode = 2; # 1: expm, logm, 2: Cay, Cay_inv
 
 # set number of random experiments
-runs = 1
+runs = 100
 dist = 0.5*np.pi
 
 #initialize
@@ -52,8 +49,8 @@ U0, U1, Xi = StEL.create_random_Stiefel_data(n, p, dist, metric_alpha)
 #----------------------------------------------------------------------
 
 for j in range(runs):
-
-    if 1: # test cayley trafo
+    print('run ', j, ' of ', runs)
+    if 0: # test cayley trafo
         A = np.dot(U0.T, Xi)
         A = 0.5*(A-A.T)
         
@@ -66,10 +63,11 @@ for j in range(runs):
         t_cay      = t_end-t_start
         print('t cay:', t_cay, 's', 'norm cayley check', linalg.norm(A-Ac))
         print('norm cayley check 2', linalg.norm(Q-Qc))
-        
-    # check if PF_inv(PF(Xi)) = Xi
-    t_start = time.time()      
+    
+    # check if PF_inv(PF(Xi)) = Xi     
     U1_pf   = StRet.Stiefel_PF_ret(U0, Xi)
+    
+    t_start = time.time()    # measure time of inverse retraction
     Xi_pfi  = StRet.Stiefel_PF_inv_ret(U0, U1_pf)
     t_end   = time.time()        
     t_pf    = t_end-t_start
@@ -79,8 +77,10 @@ for j in range(runs):
     
 
     # check if PL_inv(PL(Xi)) = Xi
-    t_start = time.time()
-    U1_pl   = StRet.Stiefel_PL_ret(U0, Xi, mode)      
+    mode = 1; # 1: expm, logm, 2: Cay, Cay_inv
+    U1_pl   = StRet.Stiefel_PL_ret(U0, Xi, mode)  
+    
+    t_start = time.time()    # measure time of inverse retraction
     Xi_pli  = StRet.Stiefel_PL_inv_ret(U0, U1_pl, mode)
     t_end   = time.time()
     t_pl    = t_end-t_start
@@ -117,7 +117,7 @@ print('normcheck', is_equal[1]/runs)
 #**************************************************************************
     
     
-for mode in range(1,3): 
+for mode in range(1,3):  # this gives mode in {1,2}
     # mode=1: matrix exp/log, mode 2: Cay, Cay^{-1}
     
     # tangent for polar factor retraction
