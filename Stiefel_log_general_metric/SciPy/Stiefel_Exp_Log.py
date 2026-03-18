@@ -200,7 +200,7 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
     # step 3
     MN = np.concatenate((M,N), axis=0)    
     # orthogonal completion
-    V, R = scipy.linalg.qr(MN, overwrite_a=True,\
+    V, Rq = scipy.linalg.qr(MN, overwrite_a=True,\
                                lwork=None,\
                                mode='full',\
                                pivoting=False,\
@@ -223,11 +223,15 @@ def Stiefel_Log_alg(U0, U1, tau, do_Procrustes=0, do_Cayley=1, do_Sylvester=1):
     
     # check if V \in SO(2p)
     if check_det:
-        # ensure that V \in SO(n)                                       
-        DetV = scipy.linalg.det(V)
-        if DetV < 0:
-            # flip sign of one column
-            V[:,p] = (-1)*V[:,p]
+        # ensure that V \in SO(n) 
+        if do_Procrustes:
+            if np.power(-1,p)*np.prod(np.diag(Rq[:p,:p]))*np.linalg.det(np.dot(R,D.T)) < 0:
+                # flip sign of one column
+                V[:,p] = (-1)*V[:,p]
+        else:
+            if np.power(-1,p)*np.prod(np.diag(Rq[:p,:p])) < 0:
+                # flip sign of one column
+                V[:,p] = (-1)*V[:,p]
 
     # initialize convergence history      
     conv_hist = []                                                     
