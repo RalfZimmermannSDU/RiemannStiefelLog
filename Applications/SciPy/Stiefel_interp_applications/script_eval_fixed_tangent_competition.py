@@ -9,6 +9,7 @@
 # Polar factor retraction 
 # Polar light retraction w. and wout. Cayley 
 # Quasi geodesic w. and wout. Cayley
+# QR retraction 
 #
 # Pipeline: 
 # Obtain tangent vector from U0 and U1 -> compute points as t = 0,...,1 for d
@@ -32,7 +33,7 @@ import Stiefel_Aux as StAux
 # Dimensions 
 
 np.random.seed(345345)
-
+9
 
 
 def run_timings(n,p):

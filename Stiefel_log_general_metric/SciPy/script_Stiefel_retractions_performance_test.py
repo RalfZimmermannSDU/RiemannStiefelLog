@@ -36,7 +36,7 @@ runs = 10
 dist = 1.0*np.pi
 
 #initialize
-time_array  = np.zeros((6,))
+time_array  = np.zeros((6,4))
     # time_array[0,:] : timings full PF 
     # time_array[1,:] : timings full PF inverse
     # time_array[2,:] : timings polar light 
@@ -44,8 +44,9 @@ time_array  = np.zeros((6,))
     # time_array[4,:] : timings polar light Cayley
     # time_array[5,:] : timings polar light Cayley inverse 
 
-
+k = 0
 for p in [500,1000,1500,2000]:
+#for p in [50,100,150,200]:    
     for j in range(runs):
         print('Dim p=', p, 'Run ', j)
         #----------------------------------------------------------------------
@@ -57,41 +58,43 @@ for p in [500,1000,1500,2000]:
         t_start = time.time()      
         U1_pf   = StRet.Stiefel_PF_ret(U0, Xi)
         t_end   = time.time() 
-        time_array[0] = time_array[0] + (t_end-t_start)
+        time_array[0,k] = time_array[0,k] + (t_end-t_start)
         
         t_start = time.time()    
         Xi_pfi  = StRet.Stiefel_PF_inv_ret(U0, U1_pf)
         t_end   = time.time() 
-        time_array[1] = time_array[1] + (t_end-t_start) 
+        time_array[1,k] = time_array[1,k] + (t_end-t_start) 
         
         # polar light
         mode = 1 # i.e. "use expm, logm
         t_start = time.time()      
         U1_pl   = StRet.Stiefel_PL_ret(U0, Xi,mode)
         t_end   = time.time() 
-        time_array[2] = time_array[2] + (t_end-t_start)
+        time_array[2,k] = time_array[2,k] + (t_end-t_start)
         
         t_start = time.time()    
         Xi_pli  = StRet.Stiefel_PL_inv_ret(U0, U1_pf,mode)
         t_end   = time.time() 
-        time_array[3] = time_array[3] + (t_end-t_start) 
+        time_array[3,k] = time_array[3,k] + (t_end-t_start) 
         
         # polar light plus Cayley
         mode = 2 # i.e. "use Cay, Cay_inv
         t_start = time.time()      
         U1_pl   = StRet.Stiefel_PL_ret(U0, Xi,mode)
         t_end   = time.time() 
-        time_array[4] = time_array[4] + (t_end-t_start)
+        time_array[4,k] = time_array[4,k] + (t_end-t_start)
         
         t_start = time.time()    
         Xi_pli  = StRet.Stiefel_PL_inv_ret(U0, U1_pf,mode)
         t_end   = time.time() 
-        time_array[5] = time_array[5] + (t_end-t_start)   
+        time_array[5,k] = time_array[5,k] + (t_end-t_start)   
         #sys.exit()
-        
+    k = k + 1
     print('Dim:',p, ':time for polar factor     retraction    : ', time_array[0]/runs)
     print('Dim:',p, ':time for polar factor inv retraction    : ', time_array[1]/runs)
     print('Dim:',p, ':time for polar light      retraction    : ', time_array[2]/runs)
     print('Dim:',p, ':time for polar light  inv retraction    : ', time_array[3]/runs)
     print('Dim:',p, ':time for polar light      retraction Cay: ', time_array[4]/runs)
     print('Dim:',p, ':time for polar light  inv retraction Cay: ', time_array[5]/runs)
+
+np.save("timings_p_retractions",time_array/runs)

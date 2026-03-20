@@ -33,7 +33,7 @@ def Stiefel_PF_ret(U0, Xi):
     # only R is needed
     S = np.linalg.qr(Xi, mode='r')
     
-    fast = 1
+    fast = 0
     if fast:
         # symmetric EVD 
         STS = np.dot(S.T, S)  
@@ -128,7 +128,7 @@ def Stiefel_PL_ret(U0, Xi, mode=1):
     # QR of (I-U0U0^T)Xi = Xi - U0*A
     S    = np.linalg.qr(Xi-U0.dot(A), mode='r')   
     
-    fast = 1
+    fast = 0
     if fast:
         # symmetric EVD 
         Lambda, V  = scipy.linalg.eigh(np.dot(S.T, S))
